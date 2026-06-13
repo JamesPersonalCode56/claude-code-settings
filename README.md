@@ -6,10 +6,36 @@ it can be reviewed, diffed, and re-applied (or replicated to another box).
 Apply it with:
 
 ```bash
-bash setup.sh
+bash setup.sh                # full bootstrap: install missing tools + config
+bash setup.sh --config-only  # only copy config (no installs)
 ```
 
-It backs up any existing file to `<name>.bak-<timestamp>` before overwriting.
+`setup.sh` is a **full bootstrap** for a fresh user/machine. It:
+
+1. **Installs missing tools** (best-effort, skipped if already present):
+   - `claude` — Claude Code CLI via the native installer
+     (`curl -fsSL https://claude.ai/install.sh | bash`).
+   - `omc` — `npm i -g oh-my-claude-sisyphus` (oh-my-claudecode).
+   - `rtk` — the Rust Token Killer binary used by the hooks. It is a static
+     x86-64 ELF, so the binary is **bundled in `bin/rtk`** and just copied to
+     `~/.local/bin` (override with `RTK_SRC=/path/to/rtk`).
+2. Copies all config (settings, CLAUDE.md/RTK.md, local skills, env vars).
+3. Builds the `mcp-bridge` venv (if its repo is present) and registers the
+   `rcp-bridge` MCP server at **user scope**.
+4. Sources the optional Qwen/Anthropic dual-auth switch if present.
+
+It backs up any existing config file to `<name>.bak-<timestamp>` before
+overwriting, and is safe to re-run.
+
+### Still manual afterwards
+
+- Open a new shell (or `source ~/.bashrc`) so PATH + env vars apply.
+- `claude` once to **log in** (credentials are per-user, never in this repo).
+- Launch `claude` once so it auto-installs the enabled plugins.
+- On a **different machine**, the `rcp-bridge` python path is machine-specific:
+  clone the rcp repo, let `setup.sh` build the venv, then re-run (or edit
+  `mcp/mcpServers.json`). The dual-auth switch lives in the separate
+  `alibaba-cloud-AI` repo.
 
 ## What's captured
 
@@ -25,6 +51,7 @@ It backs up any existing file to `<name>.bak-<timestamp>` before overwriting.
 | `skills/graphify` | Local skill: any input → knowledge graph. |
 | `skills/omc-reference` | Local skill: OMC agent/tool/skill reference. |
 | `env/auto-compact.env` | Auto-compact tuning env vars (window = 1,000,000; trigger = 40%). |
+| `bin/rtk` | Bundled Rust Token Killer binary (static x86-64), copied to `~/.local/bin` by `setup.sh` so the hooks work on a fresh box. |
 
 ## Plugins
 
