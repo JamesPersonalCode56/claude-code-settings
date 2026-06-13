@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "plugins": {
+    "oh-my-claudecode@omc": [
+      {
+        "scope": "user",
+        "installPath": "/home/minh/.claude/plugins/cache/omc/oh-my-claudecode/4.13.6",
+        "version": "4.13.6",
+        "installedAt": "2026-05-06T11:14:49.549Z",
+        "lastUpdated": "2026-05-06T11:14:49.549Z",
+        "gitCommitSha": "aacde3e19c40e891479e22fb30e6169a8782d7e4"
+      }
+    ],
+    "rust-analyzer-lsp@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/home/minh/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-05-29T03:45:45.057Z",
+        "lastUpdated": "2026-05-29T03:45:45.057Z"
+      }
+    ]
+  }
+}

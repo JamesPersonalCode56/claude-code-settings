@@ -1,0 +1,24 @@
+# Safety net — never commit secrets or runtime state, even if copied in by mistake.
+.credentials.json
+*credentials*
+.claude.json
+*.key
+*.pem
+*.token
+*token*
+*secret*
+.env
+*.env.local
+# backups produced by setup.sh
+*.bak
+*.bak-*
+# runtime / cache (in case someone copies a whole ~/.claude)
+history.jsonl
+*stats*.json
+*cache*.json
+sessions/
+projects/
+file-history/
+shell-snapshots/
+paste-cache/
+.last-*
