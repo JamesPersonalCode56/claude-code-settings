@@ -80,3 +80,9 @@ Prefer the exact commands a project's CLAUDE.md / CI defines; fall back to the a
 - **Surgical edits.** Touch only what the task requires. Don't "improve" adjacent code, comments, or formatting; don't refactor what isn't broken; match the existing style even if you'd do it differently. Every changed line must trace to the request.
 - **Clean up only your own mess.** Remove imports/vars/functions that YOUR change orphaned; leave pre-existing dead code alone (mention it, don't delete it) unless asked.
 - **No silent assumptions.** If the request is ambiguous, surface the interpretations and ask — don't pick one quietly. If a simpler approach exists, say so. When confused, name what's unclear and stop rather than guessing.
+
+# Execution by delegation (master = router, subagents = doers)
+When executing a task above trivial scope, do NOT implement it directly. Re-prompt it into a self-contained brief and hand it to a separate subagent to execute via `/omc-teams` (oh-my-claudecode:omc-teams).
+- **Master agent does only:** read/inspect, plan and route work, write the task brief, and small edits *below issue level* — typos, one-liners, config tweaks, single-file trivial fixes.
+- **At or above issue level** (a discrete feature / bugfix / refactor, or anything multi-step or multi-file): the master must NOT do it itself — delegate to an independent subagent that owns the work end-to-end.
+- The brief must be self-contained (goal, context, constraints, verifiable success criteria) so the subagent can loop to done without re-querying the master. Spawn teammates in `acceptEdits` mode.
