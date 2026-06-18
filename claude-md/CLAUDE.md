@@ -1,5 +1,5 @@
 <!-- OMC:START -->
-<!-- OMC:VERSION:4.13.6 -->
+<!-- OMC:VERSION:4.14.7 -->
 
 # oh-my-claudecode - Intelligent Multi-Agent Orchestration
 
@@ -61,10 +61,22 @@ State: `.omc/state/`, `.omc/state/sessions/{sessionId}/`, `.omc/notepad.md`, `.o
 ## Setup
 
 Say "setup omc" or run `/oh-my-claudecode:omc-setup`.
-
 <!-- OMC:END -->
 
+<!-- User customizations -->
 @RTK.md
 # graphify
 - **graphify** (`~/.claude/skills/graphify/SKILL.md`) - any input to knowledge graph. Trigger: `/graphify`
 When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` before doing anything else.
+
+# Quality gates (Rust / Python)
+When developing or changing application code, run the language's full static-check + test suite before claiming a change is done — skip only for trivial non-code edits (docs, config, comments) or when the user explicitly says so.
+- **Rust:** `cargo fmt --all` → `cargo clippy --all-targets -- -D warnings` → `cargo build` → `cargo test`. A project-specific build path in CLAUDE.md (e.g. `cargo xwin ...`) overrides plain `cargo build`.
+- **Python:** `ruff format` → `ruff check` (or the project's configured linter) → `mypy`/`pyright` if type hints are used → `pytest`.
+Prefer the exact commands a project's CLAUDE.md / CI defines; fall back to the above when none is specified. Run long builds/tests with `run_in_background`. If a gate fails, fix and re-run — do not report completion on a red gate.
+
+# Surgical changes & no silent assumptions
+(Distilled from Karpathy's notes on LLM coding pitfalls — the parts not already covered above.)
+- **Surgical edits.** Touch only what the task requires. Don't "improve" adjacent code, comments, or formatting; don't refactor what isn't broken; match the existing style even if you'd do it differently. Every changed line must trace to the request.
+- **Clean up only your own mess.** Remove imports/vars/functions that YOUR change orphaned; leave pre-existing dead code alone (mention it, don't delete it) unless asked.
+- **No silent assumptions.** If the request is ambiguous, surface the interpretations and ask — don't pick one quietly. If a simpler approach exists, say so. When confused, name what's unclear and stop rather than guessing.
