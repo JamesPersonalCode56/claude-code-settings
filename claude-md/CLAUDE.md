@@ -86,3 +86,5 @@ When executing a task above trivial scope, do NOT implement it directly. Re-prom
 - **Master agent does only:** read/inspect, plan and route work, write the task brief, and small edits *below issue level* — typos, one-liners, config tweaks, single-file trivial fixes.
 - **At or above issue level** (a discrete feature / bugfix / refactor, or anything multi-step or multi-file): the master must NOT do it itself — delegate to an independent subagent that owns the work end-to-end.
 - The brief must be self-contained (goal, context, constraints, verifiable success criteria) so the subagent can loop to done without re-querying the master. Spawn teammates in `acceptEdits` mode.
+
+> **Relation to OMC `delegation_rules`:** this rule is a stricter override of the OMC block above, not a contradiction. OMC says "delegate specialized work, work directly for trivial ops" — this pins the boundary at *issue level* and makes `/omc-teams` hand-off mandatory for anything at/above it. On any overlap, follow this rule.
