@@ -3,6 +3,13 @@
 Version-controlled **Claude Code** configuration, captured from this machine so
 it can be reviewed, diffed, and re-applied (or replicated to another box).
 
+**Clone with submodules** (the dual-auth switch is vendored as a submodule):
+
+```bash
+git clone --recursive git@github.com:JamesPersonalCode56/claude-code-settings.git
+# already cloned non-recursively? run: git submodule update --init --recursive
+```
+
 Apply it with:
 
 ```bash
@@ -20,9 +27,9 @@ bash setup.sh --config-only  # only copy config (no installs)
      x86-64 ELF, so the binary is **bundled in `bin/rtk`** and just copied to
      `~/.local/bin` (override with `RTK_SRC=/path/to/rtk`).
 2. Copies all config (settings, CLAUDE.md/RTK.md, local skills, env vars).
-3. Builds the `mcp-bridge` venv (if its repo is present) and registers the
-   `rcp-bridge` MCP server at **user scope**.
-4. Sources the optional Qwen/Anthropic dual-auth switch if present.
+3. Installs `bin/claude-hr` (Headroom-wrapped `claude` launcher) to `~/.local/bin`.
+4. Sources the Qwen/Anthropic dual-auth switch from the `vendor/claude-switch`
+   submodule (scaffolding its `.env` from `.env.example` if missing).
 
 It backs up any existing config file to `<name>.bak-<timestamp>` before
 overwriting, and is safe to re-run.
@@ -32,10 +39,10 @@ overwriting, and is safe to re-run.
 - Open a new shell (or `source ~/.bashrc`) so PATH + env vars apply.
 - `claude` once to **log in** (credentials are per-user, never in this repo).
 - Launch `claude` once so it auto-installs the enabled plugins.
-- On a **different machine**, the `rcp-bridge` python path is machine-specific:
-  clone the rcp repo, let `setup.sh` build the venv, then re-run (or edit
-  `mcp/mcpServers.json`). The dual-auth switch lives in the separate
-  `alibaba-cloud-AI` repo.
+- The `rcp` / `browser-app` / `headroom` MCP servers are **prod-hosted and
+  injected externally** (out of this repo's scope) — nothing to register here.
+- Fill `API_KEYS` in `vendor/claude-switch/.env` to use the Qwen endpoint
+  (scaffolded from `.env.example`; never committed).
 
 ## What's captured
 
@@ -47,7 +54,8 @@ overwriting, and is safe to re-run.
 | `claude-md/RTK.md` | Rust Token Killer usage notes. |
 | `plugins/known_marketplaces.json` | Plugin marketplaces: `claude-plugins-official` (anthropics) + `omc` (Yeachan-Heo/oh-my-claudecode). |
 | `plugins/installed_plugins.json` | Installed plugins + pinned versions: `oh-my-claudecode@omc` (4.13.6), `rust-analyzer-lsp@claude-plugins-official` (1.0.0). |
-| `mcp/mcpServers.json` | MCP servers — `rcp-bridge` (stdio, local python). **Machine-specific path**, edit per host. |
+| `vendor/claude-switch` | Submodule: dual-auth switch (`claude-max` / `claude-qwen` / bare-`claude` prompt), both routed through Headroom. |
+| `bin/claude-hr` | Headroom-wrapped `claude` launcher (sets `ANTHROPIC_BASE_URL` + `HEADROOM_USER_ID`); installed to `~/.local/bin`. |
 | `skills/graphify` | Local skill: any input → knowledge graph. |
 | `skills/omc-reference` | Local skill: OMC agent/tool/skill reference. |
 | `env/auto-compact.env` | Auto-compact tuning env vars (window = 1,000,000; trigger = 40%). |
@@ -72,8 +80,7 @@ custom Qwen endpoint must set the window manually.
 These are **never** committed (also guarded by `.gitignore`):
 
 - `~/.claude/.credentials.json` — OAuth tokens.
-- `~/.claude.json` (full) — runtime cache + `oauthAccount` + `userID` (PII). Only
-  the sanitized `mcpServers` block is extracted into `mcp/mcpServers.json`.
+- `~/.claude.json` (full) — runtime cache + `oauthAccount` + `userID` (PII).
 - Sessions, history, stats, caches, file-history.
 
 If you ever copy a whole `~/.claude` in here, `.gitignore` blocks the secret/

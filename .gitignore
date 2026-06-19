@@ -1,4 +1,6 @@
 # Safety net — never commit secrets or runtime state, even if copied in by mistake.
+.env
+vendor/*/.env
 .credentials.json
 *credentials*
 .claude.json

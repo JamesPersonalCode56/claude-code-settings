@@ -11,6 +11,8 @@
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Pull in submodules (vendor/claude-switch) so a non-recursive clone still works.
+git -C "$REPO" submodule update --init --recursive >/dev/null 2>&1 || true
 CC="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 TS="$(date +%Y%m%d-%H%M%S)"
 BIN="$HOME/.local/bin"
@@ -57,7 +59,7 @@ fi
 if have rtk; then ok "rtk present ($(rtk --version 2>/dev/null))"
 else
   RTK_FOUND=""
-  for cand in "${RTK_SRC:-}" "$REPO/bin/rtk" /home/minh/.local/bin/rtk /usr/local/bin/rtk; do
+  for cand in "${RTK_SRC:-}" "$REPO/bin/rtk" "$BIN/rtk" /usr/local/bin/rtk; do
     [[ -n "$cand" && -x "$cand" ]] && { RTK_FOUND="$cand"; break; }
   done
   if [[ -n "$RTK_FOUND" ]]; then
@@ -93,6 +95,14 @@ for s in "$REPO"/skills/*/; do
   rm -rf "$CC/skills/$name"; cp -a "$s" "$CC/skills/$name"; echo "  installed skill $name"
 done
 
+echo "[3b/7] claude-hr launcher (Headroom-wrapped claude)"
+if [[ -f "$REPO/bin/claude-hr" ]]; then
+  [[ -e "$BIN/claude-hr" ]] && { cp -a "$BIN/claude-hr" "$BIN/claude-hr.bak-$TS"; echo "  backed up $BIN/claude-hr"; }
+  cp -a "$REPO/bin/claude-hr" "$BIN/claude-hr"; chmod +x "$BIN/claude-hr"; ok "installed $BIN/claude-hr"
+else
+  warn "bin/claude-hr missing in repo — skipped"
+fi
+
 echo "[4/7] auto-compact env vars"
 PROFILE="${PROFILE:-$HOME/.bashrc}"
 MARK="# >>> claude-code-settings auto-compact >>>"
@@ -114,27 +124,22 @@ echo "  Code auto-installs them on next launch (oh-my-claudecode@omc,"
 echo "  rust-analyzer-lsp@claude-plugins-official). Desired state documented in"
 echo "  plugins/known_marketplaces.json + installed_plugins.json."
 
-echo "[6/7] MCP server (rcp-bridge)"
-PYBIN="$(python3 -c "import json;print(json.load(open('$REPO/mcp/mcpServers.json'))['rcp-bridge']['command'])" 2>/dev/null || true)"
-BRIDGE_DIR=""
-[[ -n "$PYBIN" ]] && BRIDGE_DIR="$(cd "$(dirname "$PYBIN")/../.." 2>/dev/null && pwd || true)"
-if [[ $BOOTSTRAP -eq 1 && -n "$BRIDGE_DIR" && -f "$BRIDGE_DIR/pyproject.toml" && ! -x "$PYBIN" ]]; then
-  echo "  building venv at $BRIDGE_DIR/.venv …"
-  ( cd "$BRIDGE_DIR" && python3 -m venv .venv && ./.venv/bin/pip install -q -e . ) \
-    && ok "venv built" || warn "venv build failed — build manually in $BRIDGE_DIR"
-fi
-if [[ -x "$PYBIN" ]] && have claude; then
-  JSON="$(python3 -c "import json,sys;print(json.dumps(json.load(open('$REPO/mcp/mcpServers.json'))['rcp-bridge']))")"
-  if claude mcp add-json rcp-bridge "$JSON" -s user >/dev/null 2>&1; then ok "registered rcp-bridge (user scope)"
-  else warn "could not auto-register (maybe already added). Manual:"; warn "  claude mcp add-json rcp-bridge '$JSON' -s user"; fi
-else
-  warn "rcp-bridge python not built at: ${PYBIN:-<unknown>}"
-  warn "  this path is MACHINE-SPECIFIC. On another machine, clone the rcp repo,"
-  warn "  build mcp-bridge venv, edit mcp/mcpServers.json, then re-run."
-fi
+echo "[6/7] MCP servers"
+echo "  rcp / browser-app / headroom MCP are prod-hosted and injected externally"
+echo "  (out of this repo's scope) — nothing to register here."
 
 echo "[7/7] dual-auth (Qwen / Anthropic-sub switch) — optional"
-SWITCH="/home/minh/WORKSPACE/alibaba-cloud-AI/claude-switch.sh"
+# Prefer the vendored submodule; fall back to the legacy absolute path only if absent.
+SWITCH="$REPO/vendor/claude-switch/claude-switch.sh"
+# Legacy fallback only if the submodule file is absent (e.g. non-recursive clone
+# with no network). Overridable via SWITCH_FALLBACK; default tracks the old repo.
+[[ -f "$SWITCH" ]] || SWITCH="${SWITCH_FALLBACK:-$HOME/WORKSPACE/alibaba-cloud-AI/claude-switch.sh}"
+# Scaffold the secret file if missing so the user knows to fill it.
+SWITCH_DIR="$(dirname "$SWITCH")"
+if [[ ! -f "$SWITCH_DIR/.env" && -f "$SWITCH_DIR/.env.example" ]]; then
+  cp "$SWITCH_DIR/.env.example" "$SWITCH_DIR/.env"
+  warn "fill API_KEYS in vendor/claude-switch/.env (scaffolded from .env.example)"
+fi
 if [[ -f "$SWITCH" ]]; then
   if grep -qF "$SWITCH" "$PROFILE" 2>/dev/null; then
     echo "  already sourced in $PROFILE"
