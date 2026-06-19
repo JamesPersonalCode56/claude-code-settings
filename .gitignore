@@ -7,7 +7,7 @@
 *.token
 *token*
 *secret*
-.env
+.*/
 *.env.local
 # backups produced by setup.sh
 *.bak
