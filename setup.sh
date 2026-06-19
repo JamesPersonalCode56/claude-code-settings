@@ -129,11 +129,8 @@ echo "  rcp / browser-app / headroom MCP are prod-hosted and injected externally
 echo "  (out of this repo's scope) — nothing to register here."
 
 echo "[7/7] dual-auth (Qwen / Anthropic-sub switch) — optional"
-# Prefer the vendored submodule; fall back to the legacy absolute path only if absent.
+# Dual-auth switch ships as the vendored submodule (pulled by `submodule update` above).
 SWITCH="$REPO/vendor/claude-switch/claude-switch.sh"
-# Legacy fallback only if the submodule file is absent (e.g. non-recursive clone
-# with no network). Overridable via SWITCH_FALLBACK; default tracks the old repo.
-[[ -f "$SWITCH" ]] || SWITCH="${SWITCH_FALLBACK:-$HOME/WORKSPACE/alibaba-cloud-AI/claude-switch.sh}"
 # Scaffold the secret file if missing so the user knows to fill it.
 SWITCH_DIR="$(dirname "$SWITCH")"
 if [[ ! -f "$SWITCH_DIR/.env" && -f "$SWITCH_DIR/.env.example" ]]; then
@@ -152,8 +149,7 @@ if [[ -f "$SWITCH" ]]; then
     ok "appended dual-auth source to $PROFILE"
   fi
 else
-  echo "  $SWITCH not found — skip (only needed if you use the Qwen endpoint;"
-  echo "  it lives in the separate alibaba-cloud-AI repo)."
+  warn "$SWITCH missing — run: git -C \"$REPO\" submodule update --init vendor/claude-switch"
 fi
 
 echo ""
