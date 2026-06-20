@@ -63,7 +63,33 @@ else
     [[ -n "$cand" && -x "$cand" ]] && { RTK_FOUND="$cand"; break; }
   done
   if [[ -n "$RTK_FOUND" ]]; then
-    cp -a "$RTK_FOUND" "$BIN/rtk"; chmod +x "$BIN/rtk"; ok "rtk copied from $RTK_FOUND -> $BIN/rtk"
+    # Provenance guard: if we're about to install the BUNDLED binary, verify it
+    # against the recorded bin/rtk.sha256 before copying. Non-bundled sources
+    # ($RTK_SRC / system paths) can't be checked against our hash — they are the
+    # user's own, so we proceed as before. Stays best-effort (warn + skip on
+    # mismatch, never hard-exit).
+    RTK_OK=1
+    if [[ "$RTK_FOUND" == "$REPO/bin/rtk" ]]; then
+      if [[ -f "$REPO/bin/rtk.sha256" ]]; then
+        WANT="$(awk '{print $1}' "$REPO/bin/rtk.sha256")"
+        GOT="$(sha256sum "$RTK_FOUND" | awk '{print $1}')"
+        if [[ "$WANT" != "$GOT" ]]; then
+          RTK_OK=0
+          warn "rtk sha256 MISMATCH for bundled $RTK_FOUND"
+          warn "  expected $WANT"
+          warn "  got      $GOT"
+          warn "  refusing to install an unverified rtk — skipping (settings.json hooks need it)."
+          warn "  -> restore bin/rtk from a trusted source, or set RTK_SRC=/path/to/rtk and re-run."
+        else
+          ok "rtk sha256 verified against bin/rtk.sha256"
+        fi
+      else
+        warn "bin/rtk.sha256 missing — installing bundled rtk WITHOUT verification."
+      fi
+    fi
+    if [[ $RTK_OK -eq 1 ]]; then
+      cp -a "$RTK_FOUND" "$BIN/rtk"; chmod +x "$BIN/rtk"; ok "rtk copied from $RTK_FOUND -> $BIN/rtk"
+    fi
   else
     warn "rtk not found and no source binary. settings.json hooks need it."
     warn "  -> copy it: cp /path/to/rtk $BIN/rtk   (or set RTK_SRC=/path/to/rtk and re-run)"

@@ -23,9 +23,13 @@ bash setup.sh --config-only  # only copy config (no installs)
    - `claude` — Claude Code CLI via the native installer
      (`curl -fsSL https://claude.ai/install.sh | bash`).
    - `omc` — `npm i -g oh-my-claude-sisyphus` (oh-my-claudecode).
-   - `rtk` — the Rust Token Killer binary used by the hooks. It is a static
-     x86-64 ELF, so the binary is **bundled in `bin/rtk`** and just copied to
-     `~/.local/bin` (override with `RTK_SRC=/path/to/rtk`).
+   - `rtk` — the **Rust Token Killer** binary used by the hooks (private build,
+     no public registry; pinned **v0.42.1**; **x86-64 Linux only** static-pie
+     ELF). Bundled in **`bin/rtk`** and copied to `~/.local/bin`. `setup.sh`
+     **verifies the bundled binary against `bin/rtk.sha256` before copying** and
+     **skips install on mismatch** (it will not place an unverified binary).
+     Override the source with `RTK_SRC=/path/to/rtk` (your own source isn't
+     hash-checked against ours).
 2. Copies all config (settings, CLAUDE.md/RTK.md, local skills, env vars).
 3. Sources the Qwen/Anthropic dual-auth switch from the `vendor/claude-switch`
    submodule (scaffolding its `.env` from `.env.example` if missing).
@@ -57,7 +61,15 @@ overwriting, and is safe to re-run.
 | `skills/graphify` | Local skill: any input → knowledge graph. |
 | `skills/omc-reference` | Local skill: OMC agent/tool/skill reference. |
 | `env/auto-compact.env` | Auto-compact tuning env vars (window = 1,000,000; trigger = 40%). |
-| `bin/rtk` | Bundled Rust Token Killer binary (static x86-64), copied to `~/.local/bin` by `setup.sh` so the hooks work on a fresh box. |
+| `bin/rtk` | Bundled **Rust Token Killer** (`rtk`) binary — **private build, no public registry/URL**, pinned **v0.42.1**, **x86-64 Linux only** (static-pie ELF). Copied to `~/.local/bin` by `setup.sh`, which now **verifies it against `bin/rtk.sha256` before install** (mismatch → warn + skip). See `claude-md/RTK.md` for usage. |
+| `bin/rtk.sha256` | Recorded SHA-256 of `bin/rtk` for provenance/integrity. `setup.sh` checks the bundled binary against it before copying; verify manually with `cd bin && sha256sum -c rtk.sha256`. |
+
+> **De-bloat later (user-gated, not done here):** `bin/rtk` is a ~9.6 MB binary
+> committed straight into git history. Two outward-facing options to slim the
+> repo, both deferred because they rewrite history / publish artifacts and need
+> an explicit decision: (1) `git lfs migrate` the binary, then force-push; or
+> (2) publish `rtk` as a GitHub Release asset and have `setup.sh` download +
+> verify it (against `bin/rtk.sha256`) instead of bundling it.
 
 ## Plugins
 
