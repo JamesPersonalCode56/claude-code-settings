@@ -27,8 +27,7 @@ bash setup.sh --config-only  # only copy config (no installs)
      x86-64 ELF, so the binary is **bundled in `bin/rtk`** and just copied to
      `~/.local/bin` (override with `RTK_SRC=/path/to/rtk`).
 2. Copies all config (settings, CLAUDE.md/RTK.md, local skills, env vars).
-3. Installs `bin/claude-hr` (Headroom-wrapped `claude` launcher) to `~/.local/bin`.
-4. Sources the Qwen/Anthropic dual-auth switch from the `vendor/claude-switch`
+3. Sources the Qwen/Anthropic dual-auth switch from the `vendor/claude-switch`
    submodule (scaffolding its `.env` from `.env.example` if missing).
 
 It backs up any existing config file to `<name>.bak-<timestamp>` before
@@ -54,8 +53,7 @@ overwriting, and is safe to re-run.
 | `claude-md/RTK.md` | Rust Token Killer usage notes. |
 | `plugins/known_marketplaces.json` | Plugin marketplaces: `claude-plugins-official` (anthropics) + `omc` (Yeachan-Heo/oh-my-claudecode). |
 | `plugins/installed_plugins.json` | Installed plugins + pinned versions: `oh-my-claudecode@omc` (4.13.6), `rust-analyzer-lsp@claude-plugins-official` (1.0.0). |
-| `vendor/claude-switch` | Submodule: dual-auth switch (`claude-max` / `claude-qwen` / bare-`claude` prompt) — **direct upstreams, no proxy** (verbatim accuracy). Headroom is opt-in via `bin/claude-hr`. |
-| `bin/claude-hr` | Headroom-wrapped `claude` launcher (sets `ANTHROPIC_BASE_URL` + `HEADROOM_USER_ID`); installed to `~/.local/bin`. |
+| `vendor/claude-switch` | Submodule: dual-auth switch (`claude-max` / `claude-qwen` / bare-`claude` prompt) — **direct upstreams, no proxy** (verbatim accuracy). |
 | `skills/graphify` | Local skill: any input → knowledge graph. |
 | `skills/omc-reference` | Local skill: OMC agent/tool/skill reference. |
 | `env/auto-compact.env` | Auto-compact tuning env vars (window = 1,000,000; trigger = 40%). |

@@ -95,16 +95,6 @@ for s in "$REPO"/skills/*/; do
   rm -rf "$CC/skills/$name"; cp -a "$s" "$CC/skills/$name"; echo "  installed skill $name"
 done
 
-if [[ $BOOTSTRAP -eq 1 ]]; then
-echo "[3b/7] claude-hr launcher (Headroom-wrapped claude)"  # binary install -> skipped on --config-only
-if [[ -f "$REPO/bin/claude-hr" ]]; then
-  [[ -e "$BIN/claude-hr" ]] && { cp -a "$BIN/claude-hr" "$BIN/claude-hr.bak-$TS"; echo "  backed up $BIN/claude-hr"; }
-  cp -a "$REPO/bin/claude-hr" "$BIN/claude-hr"; chmod +x "$BIN/claude-hr"; ok "installed $BIN/claude-hr"
-else
-  warn "bin/claude-hr missing in repo — skipped"
-fi
-fi
-
 echo "[4/7] auto-compact env vars"
 PROFILE="${PROFILE:-$HOME/.bashrc}"
 MARK="# >>> claude-code-settings auto-compact >>>"

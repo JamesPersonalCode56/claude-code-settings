@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-# Opt-in: route Claude Code through the shared Headroom proxy on prod@ubuntu-prod.
-# Normal `claude` is untouched. Revert = just use `claude`.
-export ANTHROPIC_BASE_URL="${ANTHROPIC_BASE_URL:-http://100.102.251.95:8787}"
-export HEADROOM_USER_ID="${HEADROOM_USER_ID:-research-minh}"   # tenant isolation (đổi per-user)
-# Optional: export HEADROOM_OUTPUT_SHAPER=1   # trả lời gọn hơn, đỡ output token
-exec claude "$@"
