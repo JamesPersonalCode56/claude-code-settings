@@ -10,6 +10,9 @@ vendor/*/.env
 *token*
 *secret*
 .*/
+# ...but keep project tooling dot-dirs (the broad .*/ above would hide them)
+!.github/
+!.github/**
 *.env.local
 # backups produced by setup.sh
 *.bak

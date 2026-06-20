@@ -127,6 +127,7 @@ SWITCH="$REPO/vendor/claude-switch/claude-switch.sh"
 SWITCH_DIR="$(dirname "$SWITCH")"
 if [[ ! -f "$SWITCH_DIR/.env" && -f "$SWITCH_DIR/.env.example" ]]; then
   cp "$SWITCH_DIR/.env.example" "$SWITCH_DIR/.env"
+  chmod 600 "$SWITCH_DIR/.env"  # holds a real API token — keep it owner-only
   warn "fill API_KEYS in vendor/claude-switch/.env (scaffolded from .env.example)"
 fi
 if [[ -f "$SWITCH" ]]; then
@@ -136,7 +137,7 @@ if [[ -f "$SWITCH" ]]; then
     {
       echo ""
       echo "# ===== Claude Code: dual-auth (subscription vs Qwen API) ====="
-      echo "[ -f $SWITCH ] && . $SWITCH"
+      echo "[ -f \"$SWITCH\" ] && . \"$SWITCH\""
     } >> "$PROFILE"
     ok "appended dual-auth source to $PROFILE"
   fi
