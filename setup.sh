@@ -223,50 +223,60 @@ fi
 
 # --- rtk (Rust Token Killer) — custom static binary, no public registry ---
 # settings.json hooks call rtk; missing rtk => hooks error. It is a static-pie
-# x86-64 ELF, so copying the binary works on any x86-64 Linux. Looks for a
-# source binary via $RTK_SRC, then known locations.
+# x86-64 ELF, so copying the binary works on any x86-64 Linux. The binary is NOT
+# committed to this repo — it is published as the `rtk` asset on the GitHub
+# Release and downloaded here, then verified against the recorded bin/rtk.sha256
+# before install. Override the source with $RTK_SRC (a local binary) or $RTK_URL.
+RTK_URL="${RTK_URL:-https://github.com/JamesPersonalCode56/claude-code-settings/releases/download/v1.0.0/rtk}"
 if have rtk; then ok "rtk present ($(rtk --version 2>/dev/null))"
 else
+  # Resolve a candidate binary: $RTK_SRC (local) first, else download $RTK_URL.
   RTK_FOUND=""
-  for cand in "${RTK_SRC:-}" "$REPO/bin/rtk" "$BIN/rtk" /usr/local/bin/rtk; do
-    [[ -n "$cand" && -x "$cand" ]] && { RTK_FOUND="$cand"; break; }
-  done
-  if [[ -n "$RTK_FOUND" ]]; then
-    # Provenance guard: if we're about to install the BUNDLED binary, verify it
-    # against the recorded bin/rtk.sha256 before copying. Non-bundled sources
-    # ($RTK_SRC / system paths) can't be checked against our hash — they are the
-    # user's own, so we proceed as before. Stays best-effort (warn + skip on
-    # mismatch, never hard-exit).
-    RTK_OK=1
-    if [[ "$RTK_FOUND" == "$REPO/bin/rtk" ]]; then
-      if [[ -f "$REPO/bin/rtk.sha256" ]]; then
-        WANT="$(awk '{print $1}' "$REPO/bin/rtk.sha256")"
-        GOT="$(sha256sum "$RTK_FOUND" | awk '{print $1}')"
-        if [[ "$WANT" != "$GOT" ]]; then
-          RTK_OK=0
-          warn "rtk sha256 MISMATCH for bundled $RTK_FOUND"
-          warn "  expected $WANT"
-          warn "  got      $GOT"
-          warn "  refusing to install an unverified rtk — skipping (settings.json hooks need it)."
-          warn "  -> restore bin/rtk from a trusted source, or set RTK_SRC=/path/to/rtk and re-run."
-        else
-          ok "rtk sha256 verified against bin/rtk.sha256"
-        fi
-      else
-        warn "bin/rtk.sha256 missing — installing bundled rtk WITHOUT verification."
-      fi
-    fi
-    if [[ $RTK_OK -eq 1 ]]; then
-      if [[ $DRY -eq 1 ]]; then
-        echo "  would: cp $RTK_FOUND -> $BIN/rtk (+chmod +x)"
-      else
-        cp -a "$RTK_FOUND" "$BIN/rtk"; chmod +x "$BIN/rtk"; ok "rtk copied from $RTK_FOUND -> $BIN/rtk"
-      fi
+  RTK_TMP=""
+  if [[ -n "${RTK_SRC:-}" && -x "${RTK_SRC:-}" ]]; then
+    RTK_FOUND="$RTK_SRC"
+  elif [[ $DRY -eq 1 ]]; then
+    echo "  would: download rtk from $RTK_URL, verify sha256, install to $BIN/rtk"
+  elif have curl; then
+    RTK_TMP="$(mktemp)"
+    if curl -fsSL "$RTK_URL" -o "$RTK_TMP"; then
+      RTK_FOUND="$RTK_TMP"
+    else
+      warn "rtk download failed from $RTK_URL — skipping (settings.json hooks need it)."
+      warn "  -> set RTK_SRC=/path/to/rtk and re-run, or check the release."
+      rm -f "$RTK_TMP"; RTK_TMP=""
     fi
   else
-    warn "rtk not found and no source binary. settings.json hooks need it."
-    warn "  -> copy it: cp /path/to/rtk $BIN/rtk   (or set RTK_SRC=/path/to/rtk and re-run)"
+    warn "curl not found — cannot download rtk. settings.json hooks need it."
+    warn "  -> install curl, or set RTK_SRC=/path/to/rtk and re-run."
   fi
+
+  # Verify the candidate against bin/rtk.sha256 (canonical expected hash) before
+  # installing. Applies to BOTH $RTK_SRC and the downloaded file. Best-effort:
+  # warn + skip on mismatch, never install unverified, never hard-exit.
+  if [[ -n "$RTK_FOUND" ]]; then
+    RTK_OK=1
+    if [[ -f "$REPO/bin/rtk.sha256" ]]; then
+      WANT="$(awk '{print $1}' "$REPO/bin/rtk.sha256")"
+      GOT="$(sha256sum "$RTK_FOUND" | awk '{print $1}')"
+      if [[ "$WANT" != "$GOT" ]]; then
+        RTK_OK=0
+        warn "rtk sha256 MISMATCH for $RTK_FOUND"
+        warn "  expected $WANT"
+        warn "  got      $GOT"
+        warn "  refusing to install an unverified rtk — skipping (settings.json hooks need it)."
+        warn "  -> set RTK_SRC=/path/to/rtk and re-run, or check the release."
+      else
+        ok "rtk sha256 verified against bin/rtk.sha256"
+      fi
+    else
+      warn "bin/rtk.sha256 missing — installing rtk WITHOUT verification."
+    fi
+    if [[ $RTK_OK -eq 1 ]]; then
+      cp "$RTK_FOUND" "$BIN/rtk"; chmod +x "$BIN/rtk"; ok "rtk installed -> $BIN/rtk"
+    fi
+  fi
+  [[ -n "$RTK_TMP" ]] && rm -f "$RTK_TMP"
 fi
 
 # Make sure ~/.local/bin is on PATH for future shells.

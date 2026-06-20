@@ -7,15 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`rtk` no longer committed** — the ~9.6 MB binary was stripped from **all** git
+  history and is now distributed as a verified GitHub Release asset (the `rtk`
+  asset on `v1.0.0`). `setup.sh` downloads it from `RTK_URL` and verifies it
+  against `bin/rtk.sha256` (the canonical hash, still tracked) before install;
+  mismatch or download failure → warn + skip. History was rewritten and
+  force-pushed to drop the blob (backup branch retained on origin).
+
 ### Deferred
 
 - **LICENSE not yet chosen** — no license file is committed; usage terms are
   undecided.
-- **`bin/rtk` de-bloat pending** — the ~9.6 MB binary is still committed straight
-  into git history. Two outward-facing options remain deferred (each rewrites
-  history or publishes artifacts and needs an explicit decision): `git lfs
-  migrate` the binary, or publish `rtk` as a GitHub Release asset and have
-  `setup.sh` download + verify it against `bin/rtk.sha256`.
 
 ## [1.0.0] - 2026-06-20
 
@@ -34,9 +38,9 @@ First tagged baseline of the version-controlled Claude Code configuration +
   (Python `.venv` + Poetry; keep all toolchains and bin paths project-local).
 - **Rust/Python quality gates** and Karpathy-style surgical-changes /
   delegation rules in CLAUDE.md.
-- **`bin/rtk` provenance guard** — `bin/rtk.sha256` records the binary's SHA-256;
-  `setup.sh` verifies the bundled binary before install and **skips on
-  mismatch** rather than placing an unverified binary.
+- **`rtk` provenance guard** — `bin/rtk.sha256` records the binary's SHA-256;
+  `setup.sh` verifies the `rtk` binary before install and **skips on mismatch**
+  rather than placing an unverified binary.
 - **GitHub Actions CI + `bats` test suite** — `lint` (shellcheck / shfmt / JSON
   validation), `smoke` (`setup.sh --config-only` apply + idempotency), and
   `bats` (`test/` suite); CI badge added to the README.

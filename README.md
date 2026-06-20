@@ -33,11 +33,12 @@ the config plan.
    - `omc` — `npm i -g oh-my-claude-sisyphus` (oh-my-claudecode).
    - `rtk` — the **Rust Token Killer** binary used by the hooks (private build,
      no public registry; pinned **v0.42.1**; **x86-64 Linux only** static-pie
-     ELF). Bundled in **`bin/rtk`** and copied to `~/.local/bin`. `setup.sh`
-     **verifies the bundled binary against `bin/rtk.sha256` before copying** and
-     **skips install on mismatch** (it will not place an unverified binary).
-     Override the source with `RTK_SRC=/path/to/rtk` (your own source isn't
-     hash-checked against ours).
+     ELF). **Not stored in git** — it is **downloaded from the GitHub Release
+     `v1.0.0` (asset `rtk`)** and copied to `~/.local/bin`. `setup.sh`
+     **verifies the downloaded binary against `bin/rtk.sha256` before copying**
+     and **skips install on mismatch** (it will not place an unverified binary).
+     Override the source with `RTK_SRC=/path/to/rtk` (a local binary, still
+     hash-checked) or `RTK_URL=...` (a different release URL).
 2. Copies all config (settings, CLAUDE.md/RTK.md, local skills, env vars).
 3. Sources the Qwen/Anthropic dual-auth switch from the `vendor/claude-switch`
    submodule (scaffolding its `.env` from `.env.example` if missing).
@@ -57,19 +58,22 @@ overwriting, and is safe to re-run.
 
 ## Requirements
 
-- **x86-64 Linux only** for the bundled `rtk`: `bin/rtk` is a static x86-64 ELF
-  binary, so it runs only on x86-64 Linux. The settings.json hooks invoke `rtk`,
-  so on macOS / ARM / other arches the bundled binary will not run (config still
-  applies — see below).
+- **x86-64 Linux only** for `rtk`: the `rtk` binary is a static x86-64 ELF, so it
+  runs only on x86-64 Linux. The settings.json hooks invoke `rtk`, so on macOS /
+  ARM / other arches it will not run (config still applies — see below).
+- **Network for the `rtk` download** — full bootstrap downloads `rtk` from the
+  GitHub Release `v1.0.0`. Offline / restricted hosts can point at a local binary
+  with `RTK_SRC=/path/to/rtk` (or a different URL with `RTK_URL=...`).
 - **bash ≥ 4** — `setup.sh` uses bash 4+ features (`[[ … ]]`, arrays).
 - **`git`** — to clone the repo and pull the `vendor/claude-switch` submodule.
-- **`curl`** — used by the native Claude Code installer during full bootstrap.
+- **`curl`** — used by the native Claude Code installer and the `rtk` download
+  during full bootstrap.
 - **`node` / `npm`** — only needed for the optional `omc` install
   (`npm i -g oh-my-claude-sisyphus`); skipped if `npm` is absent.
 - **`gh`** — optional; not required by `setup.sh`.
 
 macOS / non-x86-64 users can still apply the config (`bash setup.sh
---config-only`), but the bundled `rtk` binary won't execute on their platform —
+--config-only`), but the `rtk` binary won't execute on their platform —
 supply your own `rtk` via `RTK_SRC=/path/to/rtk` or remove the rtk hooks.
 
 ## What's captured
@@ -86,15 +90,7 @@ supply your own `rtk` via `RTK_SRC=/path/to/rtk` or remove the rtk hooks.
 | `skills/graphify` | Local skill: any input → knowledge graph. |
 | `skills/omc-reference` | Local skill: OMC agent/tool/skill reference. |
 | `env/auto-compact.env` | Auto-compact tuning env vars (window = 1,000,000; trigger = 40%). |
-| `bin/rtk` | Bundled **Rust Token Killer** (`rtk`) binary — **private build, no public registry/URL**, pinned **v0.42.1**, **x86-64 Linux only** (static-pie ELF). Copied to `~/.local/bin` by `setup.sh`, which now **verifies it against `bin/rtk.sha256` before install** (mismatch → warn + skip). See `claude-md/RTK.md` for usage. |
-| `bin/rtk.sha256` | Recorded SHA-256 of `bin/rtk` for provenance/integrity. `setup.sh` checks the bundled binary against it before copying; verify manually with `cd bin && sha256sum -c rtk.sha256`. |
-
-> **De-bloat later (user-gated, not done here):** `bin/rtk` is a ~9.6 MB binary
-> committed straight into git history. Two outward-facing options to slim the
-> repo, both deferred because they rewrite history / publish artifacts and need
-> an explicit decision: (1) `git lfs migrate` the binary, then force-push; or
-> (2) publish `rtk` as a GitHub Release asset and have `setup.sh` download +
-> verify it (against `bin/rtk.sha256`) instead of bundling it.
+| `bin/rtk.sha256` | Canonical SHA-256 of the **Rust Token Killer** (`rtk`) binary — **private build, no public registry**, pinned **v0.42.1**, **x86-64 Linux only** (static-pie ELF). The binary itself is **not in git**; it is published as the `rtk` asset on the GitHub Release `v1.0.0` and **downloaded + verified against this hash** by `setup.sh` before install (mismatch → warn + skip). See `claude-md/RTK.md` for usage. |
 
 ## Plugins
 
@@ -112,12 +108,14 @@ custom Qwen endpoint must set the window manually.
 
 ## Troubleshooting
 
-- **`rtk` missing, or sha256 mismatch → hooks error / setup skips it.** The
-  settings.json hooks call `rtk`; if it isn't installed they error. `setup.sh`
-  verifies the bundled `bin/rtk` against `bin/rtk.sha256` and **skips the install
-  on mismatch** (it won't place an unverified binary). Fix: restore a trusted
-  `bin/rtk`, or point setup at your own binary and re-run:
-  `RTK_SRC=/path/to/rtk bash setup.sh`.
+- **`rtk` download failed / missing, or sha256 mismatch → hooks error / setup
+  skips it.** The settings.json hooks call `rtk`; if it isn't installed they
+  error. `setup.sh` downloads `rtk` from the GitHub Release `v1.0.0`, verifies it
+  against `bin/rtk.sha256`, and **skips the install on mismatch or download
+  failure** (it won't place an unverified binary). Fix: re-run with a local
+  binary, or point at a different release URL —
+  `RTK_SRC=/path/to/rtk bash setup.sh` (or `RTK_URL=... bash setup.sh`) — or
+  check the release asset.
 - **Submodule didn't clone (`vendor/claude-switch` empty).** Pull it explicitly:
   `git submodule update --init --recursive`. The submodule URL is HTTPS, so an
   anonymous clone works (no SSH key needed).

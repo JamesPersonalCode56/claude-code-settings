@@ -55,20 +55,31 @@ git commit -m "vendor/claude-switch: bump to <reason>"
 The parent records only the submodule's commit pointer — stage `vendor/claude-switch`
 (the gitlink), never the submodule's working files from the parent.
 
-## Update `bin/rtk` (and regenerate its checksum)
+## Update `rtk` (release asset + regenerate its checksum)
 
-`bin/rtk` is provenance-guarded by `bin/rtk.sha256`. If you replace the binary,
-**regenerate the checksum in the same commit** or `setup.sh` will refuse to
-install it (sha256 mismatch → skip):
+The `rtk` binary is **not committed** — it ships as the `rtk` asset on the GitHub
+Release and is provenance-guarded by `bin/rtk.sha256`. To update it:
 
-```bash
-cd bin
-cp /path/to/new/rtk rtk
-sha256sum rtk > rtk.sha256     # records "<hash>  rtk"
-sha256sum -c rtk.sha256        # confirm it verifies
-cd ..
-git add bin/rtk bin/rtk.sha256
-```
+1. Build/obtain the new `rtk` binary.
+2. Regenerate `bin/rtk.sha256` from it (the canonical expected hash) and commit
+   that file — `setup.sh` verifies the download against it (mismatch → skip):
+
+   ```bash
+   cd bin
+   sha256sum /path/to/new/rtk | sed 's# .*/# #;s#  *# #' > rtk.sha256  # "<hash>  rtk"
+   sha256sum -c rtk.sha256 <<<"$(awk '{print $1}' rtk.sha256)  /path/to/new/rtk"
+   cd ..
+   git add bin/rtk.sha256
+   ```
+
+3. Upload the binary as the `rtk` asset on the release (clobbering the old one):
+
+   ```bash
+   gh release upload v1.0.0 /path/to/new/rtk --clobber   # asset must be named `rtk`
+   ```
+
+   If you cut a new tag, bump the `RTK_URL` default (and the release tag) in
+   `setup.sh` to match.
 
 ## Commit convention
 
@@ -80,13 +91,14 @@ a trailer:
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
 ```
 
-## Never commit secrets or the rtk binary via `git add -A`
+## Never commit secrets via `git add -A`
 
-The working tree contains a **real secret** (`vendor/claude-switch/.env`) and a
-large binary (`bin/rtk`) that must not be swept in accidentally.
+The working tree contains a **real secret** (`vendor/claude-switch/.env`) that
+must not be swept in accidentally.
 
 - **Never run `git add -A` / `git add .`.** Stage files explicitly **by path**.
 - `vendor/claude-switch/.env` holds a real API token — it is gitignored and
   `chmod 600`; keep it out of every commit.
-- Only re-commit `bin/rtk` deliberately, alongside a regenerated
+- **Never re-commit the `rtk` binary.** It was stripped from history and is
+  distributed only as a release asset — commit just the regenerated
   `bin/rtk.sha256` (see above).
