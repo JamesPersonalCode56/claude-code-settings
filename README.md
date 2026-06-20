@@ -1,5 +1,7 @@
 # claude-code-settings
 
+[![CI](https://github.com/JamesPersonalCode56/claude-code-settings/actions/workflows/ci.yml/badge.svg)](https://github.com/JamesPersonalCode56/claude-code-settings/actions/workflows/ci.yml)
+
 Version-controlled **Claude Code** configuration, captured from this machine so
 it can be reviewed, diffed, and re-applied (or replicated to another box).
 

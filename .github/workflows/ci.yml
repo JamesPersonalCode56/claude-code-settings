@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    name: lint (shellcheck / shfmt / json)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install shellcheck + shfmt
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck shfmt
+
+      - name: shellcheck setup.sh (BLOCKING)
+        # Blocks on warning/error. The two remaining findings are intentional
+        # info-level patterns in pre-existing code (an `&& ok || warn`
+        # best-effort install line, and a deliberately single-quoted
+        # `export PATH=...` literal written verbatim into the profile), so we
+        # set the severity floor to warning rather than mutate working code.
+        run: shellcheck --severity=warning setup.sh
+
+      - name: shellcheck vendor/claude-switch (advisory)
+        continue-on-error: true
+        run: shellcheck vendor/claude-switch/claude-switch.sh
+
+      - name: shfmt diff (advisory)
+        continue-on-error: true
+        run: shfmt -d setup.sh vendor/claude-switch/claude-switch.sh
+
+      - name: Validate JSON (BLOCKING)
+        run: |
+          set -e
+          for f in settings/*.json plugins/*.json; do
+            echo "validating $f"
+            python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$f"
+          done
+
+  smoke:
+    name: smoke (setup.sh --config-only + idempotency)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Run setup.sh --config-only into an isolated HOME
+        run: |
+          set -euo pipefail
+          export HOME="$(mktemp -d)"
+          export CLAUDE_CONFIG_DIR="$HOME/.claude"
+          export PROFILE="$HOME/.bashrc"
+          touch "$PROFILE"
+
+          bash setup.sh --config-only
+
+          echo "== assert settings.json landed =="
+          test -f "$CLAUDE_CONFIG_DIR/settings.json"
+
+          echo "== assert CLAUDE.md carries the Project-local toolchains rule =="
+          grep -qF "Project-local toolchains" "$CLAUDE_CONFIG_DIR/CLAUDE.md"
+
+          echo "== assert skills landed =="
+          test -d "$CLAUDE_CONFIG_DIR/skills/graphify"
+          test -d "$CLAUDE_CONFIG_DIR/skills/omc-reference"
+
+          echo "== second run for idempotency =="
+          bash setup.sh --config-only
+
+          echo "== assert a backup was created =="
+          ls "$CLAUDE_CONFIG_DIR"/settings.json.bak-* >/dev/null
+
+          echo "== assert markers appear EXACTLY once in PROFILE =="
+          ac="$(grep -cF '>>> claude-code-settings auto-compact >>>' "$PROFILE")"
+          da="$(grep -cF 'Claude Code: dual-auth' "$PROFILE")"
+          echo "auto-compact marker count = $ac ; dual-auth marker count = $da"
+          test "$ac" -eq 1
+          test "$da" -eq 1
+
+          echo "smoke OK"
+
+  bats:
+    name: bats (test/ suite)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install bats-core
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bats
+
+      - name: Run bats tests
+        run: bats test/
