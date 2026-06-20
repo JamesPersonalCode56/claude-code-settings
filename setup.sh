@@ -12,7 +12,12 @@ set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Pull in submodules (vendor/claude-switch) so a non-recursive clone still works.
-git -C "$REPO" submodule update --init --recursive >/dev/null 2>&1 || true
+# Best-effort: surface a real failure (don't swallow it) but keep going so the
+# rest of the config still lands.
+if ! git -C "$REPO" submodule update --init --recursive >/dev/null 2>&1; then
+  echo "  !! submodule init failed — run: git submodule update --init --recursive" >&2
+  echo "  !! the dual-auth switch will be missing until then; continuing with config." >&2
+fi
 CC="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 TS="$(date +%Y%m%d-%H%M%S)"
 BIN="$HOME/.local/bin"
