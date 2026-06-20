@@ -117,7 +117,7 @@ echo "  rust-analyzer-lsp@claude-plugins-official). Desired state documented in"
 echo "  plugins/known_marketplaces.json + installed_plugins.json."
 
 echo "[6/7] MCP servers"
-echo "  rcp / browser-app / headroom MCP are prod-hosted and injected externally"
+echo "  rcp / browser-app MCP are prod-hosted and injected externally"
 echo "  (out of this repo's scope) — nothing to register here."
 
 echo "[7/7] dual-auth (Qwen / Anthropic-sub switch) — optional"

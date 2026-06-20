@@ -75,6 +75,12 @@ When developing or changing application code, run the language's full static-che
 - **Python:** `ruff format` → `ruff check` (or the project's configured linter) → `mypy`/`pyright` if type hints are used → `pytest`.
 Prefer the exact commands a project's CLAUDE.md / CI defines; fall back to the above when none is specified. Run long builds/tests with `run_in_background`. If a gate fails, fix and re-run — do not report completion on a red gate.
 
+# Project-local toolchains & dependency isolation
+Keep every language's toolchain and dependencies **inside the project directory** — never inject them into the system/user global environment.
+- **Python (default):** create a project-local `.venv` and manage dependencies with **Poetry** (`poetry install` / `poetry add`; run via `poetry run` or the in-project `.venv/bin`). Do not `pip install` into system/user site-packages.
+- **All bin paths stay project-local:** install and invoke tool binaries from within the project (`.venv/bin`, `node_modules/.bin`, `./bin`, `vendor/`, etc.) instead of dropping them on the system `PATH` or a global prefix.
+- **Other languages follow the same principle when compiling/running:** use a project-scoped toolchain + dependency dir and the project's lockfile (e.g. Node `node_modules`, Rust `rust-toolchain.toml` + `target/`, Go module cache scoped to the project) rather than mutating system-wide state. Prefer local/pinned over global.
+
 # Surgical changes & no silent assumptions
 (Distilled from Karpathy's notes on LLM coding pitfalls — the parts not already covered above.)
 - **Surgical edits.** Touch only what the task requires. Don't "improve" adjacent code, comments, or formatting; don't refactor what isn't broken; match the existing style even if you'd do it differently. Every changed line must trace to the request.

@@ -38,8 +38,8 @@ overwriting, and is safe to re-run.
 - Open a new shell (or `source ~/.bashrc`) so PATH + env vars apply.
 - `claude` once to **log in** (credentials are per-user, never in this repo).
 - Launch `claude` once so it auto-installs the enabled plugins.
-- The `rcp` / `browser-app` / `headroom` MCP servers are **prod-hosted and
-  injected externally** (out of this repo's scope) — nothing to register here.
+- The `rcp` / `browser-app` MCP servers are **prod-hosted and injected
+  externally** (out of this repo's scope) — nothing to register here.
 - Fill `API_KEYS` in `vendor/claude-switch/.env` to use the Qwen endpoint
   (scaffolded from `.env.example`; never committed).
 
