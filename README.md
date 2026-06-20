@@ -16,8 +16,14 @@ Apply it with:
 
 ```bash
 bash setup.sh                # full bootstrap: install missing tools + config
-bash setup.sh --config-only  # only copy config (no installs)
+bash setup.sh --config-only  # only copy config; skip all tool installs + PATH append
+bash setup.sh --dry-run      # print the plan as "would: …"; make NO changes
+bash setup.sh --uninstall    # remove this bundle's $PROFILE blocks (backs it up first)
+bash setup.sh --help         # show usage and exit (also -h)
 ```
+
+`--config-only` and `--dry-run` combine: `--config-only --dry-run` previews just
+the config plan.
 
 `setup.sh` is a **full bootstrap** for a fresh user/machine. It:
 
@@ -48,6 +54,23 @@ overwriting, and is safe to re-run.
   externally** (out of this repo's scope) — nothing to register here.
 - Fill `API_KEYS` in `vendor/claude-switch/.env` to use the Qwen endpoint
   (scaffolded from `.env.example`; never committed).
+
+## Requirements
+
+- **x86-64 Linux only** for the bundled `rtk`: `bin/rtk` is a static x86-64 ELF
+  binary, so it runs only on x86-64 Linux. The settings.json hooks invoke `rtk`,
+  so on macOS / ARM / other arches the bundled binary will not run (config still
+  applies — see below).
+- **bash ≥ 4** — `setup.sh` uses bash 4+ features (`[[ … ]]`, arrays).
+- **`git`** — to clone the repo and pull the `vendor/claude-switch` submodule.
+- **`curl`** — used by the native Claude Code installer during full bootstrap.
+- **`node` / `npm`** — only needed for the optional `omc` install
+  (`npm i -g oh-my-claude-sisyphus`); skipped if `npm` is absent.
+- **`gh`** — optional; not required by `setup.sh`.
+
+macOS / non-x86-64 users can still apply the config (`bash setup.sh
+--config-only`), but the bundled `rtk` binary won't execute on their platform —
+supply your own `rtk` via `RTK_SRC=/path/to/rtk` or remove the rtk hooks.
 
 ## What's captured
 
@@ -86,6 +109,26 @@ settings.json `env` block — that is silently ignored for autocompact). `setup.
 appends the exports to `~/.bashrc`. On a Windows host (e.g. the Qwen box) use
 `setx` instead. See the comments in that file for what each var does and why a
 custom Qwen endpoint must set the window manually.
+
+## Troubleshooting
+
+- **`rtk` missing, or sha256 mismatch → hooks error / setup skips it.** The
+  settings.json hooks call `rtk`; if it isn't installed they error. `setup.sh`
+  verifies the bundled `bin/rtk` against `bin/rtk.sha256` and **skips the install
+  on mismatch** (it won't place an unverified binary). Fix: restore a trusted
+  `bin/rtk`, or point setup at your own binary and re-run:
+  `RTK_SRC=/path/to/rtk bash setup.sh`.
+- **Submodule didn't clone (`vendor/claude-switch` empty).** Pull it explicitly:
+  `git submodule update --init --recursive`. The submodule URL is HTTPS, so an
+  anonymous clone works (no SSH key needed).
+- **`claude-qwen` exits immediately complaining about `.env`.** The switch
+  fails fast when `vendor/claude-switch/.env` is missing or still holds the
+  placeholder. Fix: fill `API_KEYS` (and `BASE_URL`) in
+  `vendor/claude-switch/.env` with your real Qwen token.
+- **Undo everything this bundle added.** Run `bash setup.sh --uninstall` to
+  remove the auto-compact + dual-auth blocks from your `$PROFILE` (it backs the
+  profile up first). Installed config files and copied binaries are left in
+  place; the command prints the exact restore/remove lines.
 
 ## NOT included (secrets / runtime — intentionally excluded)
 
