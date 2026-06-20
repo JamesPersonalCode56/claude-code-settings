@@ -54,7 +54,7 @@ overwriting, and is safe to re-run.
 | `claude-md/RTK.md` | Rust Token Killer usage notes. |
 | `plugins/known_marketplaces.json` | Plugin marketplaces: `claude-plugins-official` (anthropics) + `omc` (Yeachan-Heo/oh-my-claudecode). |
 | `plugins/installed_plugins.json` | Installed plugins + pinned versions: `oh-my-claudecode@omc` (4.13.6), `rust-analyzer-lsp@claude-plugins-official` (1.0.0). |
-| `vendor/claude-switch` | Submodule: dual-auth switch (`claude-max` / `claude-qwen` / bare-`claude` prompt), both routed through Headroom. |
+| `vendor/claude-switch` | Submodule: dual-auth switch (`claude-max` / `claude-qwen` / bare-`claude` prompt) — **direct upstreams, no proxy** (verbatim accuracy). Headroom is opt-in via `bin/claude-hr`. |
 | `bin/claude-hr` | Headroom-wrapped `claude` launcher (sets `ANTHROPIC_BASE_URL` + `HEADROOM_USER_ID`); installed to `~/.local/bin`. |
 | `skills/graphify` | Local skill: any input → knowledge graph. |
 | `skills/omc-reference` | Local skill: OMC agent/tool/skill reference. |
