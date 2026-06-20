@@ -3,16 +3,12 @@
     "source": {
       "source": "github",
       "repo": "anthropics/claude-plugins-official"
-    },
-    "installLocation": "/home/minh/.claude/plugins/marketplaces/claude-plugins-official",
-    "lastUpdated": "2026-06-13T08:02:08.688Z"
+    }
   },
   "omc": {
     "source": {
       "source": "git",
       "url": "https://github.com/Yeachan-Heo/oh-my-claudecode.git"
-    },
-    "installLocation": "/home/minh/.claude/plugins/marketplaces/omc",
-    "lastUpdated": "2026-05-06T11:14:20.557Z"
+    }
   }
 }
