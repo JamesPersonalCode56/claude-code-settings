@@ -78,7 +78,7 @@ Release and is provenance-guarded by `bin/rtk.sha256`. To update it:
    gh release upload v1.0.0 /path/to/new/rtk --clobber   # asset must be named `rtk`
    ```
 
-   If you cut a new tag, bump the `RTK_URL` default (and the release tag) in
+   If you cut a new tag, bump the `RTK_TAG` default (and the release tag) in
    `setup.sh` to match.
 
 ## Commit convention

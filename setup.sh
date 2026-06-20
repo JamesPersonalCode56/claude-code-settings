@@ -224,35 +224,38 @@ fi
 # --- rtk (Rust Token Killer) — custom static binary, no public registry ---
 # settings.json hooks call rtk; missing rtk => hooks error. It is a static-pie
 # x86-64 ELF, so copying the binary works on any x86-64 Linux. The binary is NOT
-# committed to this repo — it is published as the `rtk` asset on the GitHub
-# Release and downloaded here, then verified against the recorded bin/rtk.sha256
-# before install. Override the source with $RTK_SRC (a local binary) or $RTK_URL.
-RTK_URL="${RTK_URL:-https://github.com/JamesPersonalCode56/claude-code-settings/releases/download/v1.0.0/rtk}"
+# committed to this repo — it is published as the `rtk` asset on the private
+# GitHub Release (v1.0.0) and fetched here via `gh release download` (requires
+# `gh` + `gh auth login`). Override the source with $RTK_SRC (a local binary).
+RTK_REPO="JamesPersonalCode56/claude-code-settings"
+RTK_TAG="${RTK_TAG:-v1.0.0}"
 if have rtk; then ok "rtk present ($(rtk --version 2>/dev/null))"
 else
-  # Resolve a candidate binary: $RTK_SRC (local) first, else download $RTK_URL.
+  # Resolve a candidate binary: $RTK_SRC (local) first, else `gh release download`.
   RTK_FOUND=""
   RTK_TMP=""
   if [[ -n "${RTK_SRC:-}" && -x "${RTK_SRC:-}" ]]; then
     RTK_FOUND="$RTK_SRC"
   elif [[ $DRY -eq 1 ]]; then
-    echo "  would: download rtk from $RTK_URL, verify sha256, install to $BIN/rtk"
-  elif have curl; then
+    echo "  would: gh release download $RTK_TAG --repo $RTK_REPO -p rtk, verify sha256, install to $BIN/rtk"
+  elif have gh; then
     RTK_TMP="$(mktemp)"
-    if curl -fsSL "$RTK_URL" -o "$RTK_TMP"; then
+    if gh release download "$RTK_TAG" --repo "$RTK_REPO" -p rtk -O "$RTK_TMP" --clobber 2>/dev/null; then
       RTK_FOUND="$RTK_TMP"
     else
-      warn "rtk download failed from $RTK_URL — skipping (settings.json hooks need it)."
-      warn "  -> set RTK_SRC=/path/to/rtk and re-run, or check the release."
+      warn "rtk download failed (gh release download $RTK_TAG) — skipping (settings.json hooks need it)."
+      warn "  -> run: gh auth login   (repo needs authenticated access)"
+      warn "  -> or set RTK_SRC=/path/to/rtk and re-run."
       rm -f "$RTK_TMP"; RTK_TMP=""
     fi
   else
-    warn "curl not found — cannot download rtk. settings.json hooks need it."
-    warn "  -> install curl, or set RTK_SRC=/path/to/rtk and re-run."
+    warn "gh not found — cannot download rtk (repo is private). settings.json hooks need it."
+    warn "  -> install gh + run: gh auth login"
+    warn "  -> or set RTK_SRC=/path/to/rtk and re-run."
   fi
 
   # Verify the candidate against bin/rtk.sha256 (canonical expected hash) before
-  # installing. Applies to BOTH $RTK_SRC and the downloaded file. Best-effort:
+  # installing. Applies to BOTH $RTK_SRC and the gh-downloaded file. Best-effort:
   # warn + skip on mismatch, never install unverified, never hard-exit.
   if [[ -n "$RTK_FOUND" ]]; then
     RTK_OK=1
@@ -265,7 +268,7 @@ else
         warn "  expected $WANT"
         warn "  got      $GOT"
         warn "  refusing to install an unverified rtk — skipping (settings.json hooks need it)."
-        warn "  -> set RTK_SRC=/path/to/rtk and re-run, or check the release."
+        warn "  -> set RTK_SRC=/path/to/rtk and re-run, or check the release asset."
       else
         ok "rtk sha256 verified against bin/rtk.sha256"
       fi

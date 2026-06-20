@@ -33,12 +33,13 @@ the config plan.
    - `omc` — `npm i -g oh-my-claude-sisyphus` (oh-my-claudecode).
    - `rtk` — the **Rust Token Killer** binary used by the hooks (private build,
      no public registry; pinned **v0.42.1**; **x86-64 Linux only** static-pie
-     ELF). **Not stored in git** — it is **downloaded from the GitHub Release
-     `v1.0.0` (asset `rtk`)** and copied to `~/.local/bin`. `setup.sh`
-     **verifies the downloaded binary against `bin/rtk.sha256` before copying**
-     and **skips install on mismatch** (it will not place an unverified binary).
-     Override the source with `RTK_SRC=/path/to/rtk` (a local binary, still
-     hash-checked) or `RTK_URL=...` (a different release URL).
+     ELF). **Not stored in git** — it is **fetched from the private GitHub
+     Release `v1.0.0` (asset `rtk`) via `gh release download`** and copied to
+     `~/.local/bin`. Requires **`gh` installed + `gh auth login`** (repo is
+     private). `setup.sh` **verifies the downloaded binary against
+     `bin/rtk.sha256` before copying** and **skips install on mismatch** (it
+     will not place an unverified binary). Override with `RTK_SRC=/path/to/rtk`
+     (a local binary, still hash-checked) to skip the gh download.
 2. Copies all config (settings, CLAUDE.md/RTK.md, local skills, env vars).
 3. Sources the Qwen/Anthropic dual-auth switch from the `vendor/claude-switch`
    submodule (scaffolding its `.env` from `.env.example` if missing).
@@ -61,16 +62,15 @@ overwriting, and is safe to re-run.
 - **x86-64 Linux only** for `rtk`: the `rtk` binary is a static x86-64 ELF, so it
   runs only on x86-64 Linux. The settings.json hooks invoke `rtk`, so on macOS /
   ARM / other arches it will not run (config still applies — see below).
-- **Network for the `rtk` download** — full bootstrap downloads `rtk` from the
-  GitHub Release `v1.0.0`. Offline / restricted hosts can point at a local binary
-  with `RTK_SRC=/path/to/rtk` (or a different URL with `RTK_URL=...`).
+- **`gh` + `gh auth login` for `rtk`** — the repo is private, so `setup.sh`
+  uses `gh release download` to fetch the `rtk` binary. Install `gh` and run
+  `gh auth login` before bootstrapping, or supply a local binary with
+  `RTK_SRC=/path/to/rtk` to skip the download entirely.
 - **bash ≥ 4** — `setup.sh` uses bash 4+ features (`[[ … ]]`, arrays).
 - **`git`** — to clone the repo and pull the `vendor/claude-switch` submodule.
-- **`curl`** — used by the native Claude Code installer and the `rtk` download
-  during full bootstrap.
+- **`curl`** — used by the native Claude Code installer during full bootstrap.
 - **`node` / `npm`** — only needed for the optional `omc` install
   (`npm i -g oh-my-claude-sisyphus`); skipped if `npm` is absent.
-- **`gh`** — optional; not required by `setup.sh`.
 
 macOS / non-x86-64 users can still apply the config (`bash setup.sh
 --config-only`), but the `rtk` binary won't execute on their platform —
@@ -108,14 +108,15 @@ custom Qwen endpoint must set the window manually.
 
 ## Troubleshooting
 
-- **`rtk` download failed / missing, or sha256 mismatch → hooks error / setup
-  skips it.** The settings.json hooks call `rtk`; if it isn't installed they
-  error. `setup.sh` downloads `rtk` from the GitHub Release `v1.0.0`, verifies it
-  against `bin/rtk.sha256`, and **skips the install on mismatch or download
-  failure** (it won't place an unverified binary). Fix: re-run with a local
-  binary, or point at a different release URL —
-  `RTK_SRC=/path/to/rtk bash setup.sh` (or `RTK_URL=... bash setup.sh`) — or
-  check the release asset.
+- **`rtk` not installed / download failed / sha256 mismatch → hooks error /
+  setup skips it.** The settings.json hooks call `rtk`; if it isn't installed
+  they error. `setup.sh` fetches `rtk` via `gh release download v1.0.0` (repo is
+  private — requires `gh auth login`), verifies against `bin/rtk.sha256`, and
+  **skips install on mismatch or download failure** (it won't place an unverified
+  binary). Fix:
+  - Not authenticated: `gh auth login`, then re-run `bash setup.sh`.
+  - No `gh`: install it, or supply a local binary: `RTK_SRC=/path/to/rtk bash setup.sh`.
+  - Wrong asset: check `gh release view v1.0.0 --repo JamesPersonalCode56/claude-code-settings`.
 - **Submodule didn't clone (`vendor/claude-switch` empty).** Pull it explicitly:
   `git submodule update --init --recursive`. The submodule URL is HTTPS, so an
   anonymous clone works (no SSH key needed).

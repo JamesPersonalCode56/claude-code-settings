@@ -10,10 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **`rtk` no longer committed** — the ~9.6 MB binary was stripped from **all** git
-  history and is now distributed as a verified GitHub Release asset (the `rtk`
-  asset on `v1.0.0`). `setup.sh` downloads it from `RTK_URL` and verifies it
-  against `bin/rtk.sha256` (the canonical hash, still tracked) before install;
-  mismatch or download failure → warn + skip. History was rewritten and
+  history and is now distributed as the `rtk` asset on the private GitHub Release
+  `v1.0.0`. `setup.sh` fetches it via `gh release download` (requires `gh` +
+  `gh auth login`; or set `RTK_SRC=/path/to/rtk` for a local override) and
+  verifies against `bin/rtk.sha256` (the canonical hash, still tracked) before
+  install; mismatch or download failure → warn + skip. History was rewritten and
   force-pushed to drop the blob (backup branch retained on origin).
 
 ### Deferred
