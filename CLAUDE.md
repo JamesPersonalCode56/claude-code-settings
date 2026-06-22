@@ -34,8 +34,16 @@ Helpers: `do_or_echo` (dry-run gate), `have`/`warn`/`ok`, `backup_then_copy src 
 - lint: `shellcheck --severity=warning setup.sh` (BLOCKING — keep clean) · `shfmt -d setup.sh vendor/claude-switch/claude-switch.sh` (advisory) · JSON validate `settings/*.json plugins/*.json` (BLOCKING).
 - smoke: `HOME=$(mktemp -d) CLAUDE_CONFIG_DIR=$HOME/.claude PROFILE=$HOME/.bashrc bash -c 'touch "$PROFILE"; bash setup.sh --config-only'` — asserts settings.json + skills landed, CLAUDE.md carries sentinel `project_local_toolchains`, runs twice for idempotency, `$PROFILE` markers appear EXACTLY once.
 - bats: `bats test/` (`setup_config_only.bats`, `switch_routing.bats`).
-COUPLING: editing `claude-md/CLAUDE.md` must keep the literal `project_local_toolchains` anchor — the smoke job greps it (and `ci.yml` asserts it). Rename the anchor → update both files together.
+COUPLING: the `project_local_toolchains` anchor lives in `claude-md/CLAUDE.md` and is grepped by TWO independent checks — `.github/workflows/ci.yml` (smoke job) AND `test/setup_config_only.bats:31`. Rename/remove it → update ALL THREE files in the same commit. (Real regression: smoke was updated but the bats grep was missed, so smoke passed green while the bats job failed on the same anchor.)
 </ci_gates>
+
+<change_discipline>
+Lessons from a real anchor-rename regression (smoke passed, bats failed on the SAME anchor):
+- Changing a referenced value (anchor, JSON key, filename, flag, env var) → `grep -rn` the WHOLE repo for EVERY dependent BEFORE claiming done. Enumerate call sites with grep, never from memory — memory stops at the first site you recall; grep lists all of them.
+- Verify with the ACTUAL check that guards it, not a sibling assumed equivalent. No local `bats`? `git clone --depth 1 https://github.com/bats-core/bats-core` and run `bats test/` — never infer the bats job is green from the smoke job alone.
+- A literal duplicated across N files is a regression trap: update all N or none. Prefer one source + reference; if duplication is unavoidable, list every site in the COUPLING note above.
+- Config sync drift: `settings/settings.json` (repo) can fall behind `~/.claude/settings.json` (live) when something edits the live file directly. Before `setup.sh --config-only` (which copies repo→live), diff the two `env`/top-level keys — re-install silently reverts live to repo, so reconcile repo forward first.
+</change_discipline>
 
 <guardrails>
 - NEVER `git add -A` / `git add .`. Stage by explicit path. Working tree holds a REAL secret `vendor/claude-switch/.env` (gitignored, chmod 600) — keep it out of every commit.
