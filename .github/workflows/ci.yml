@@ -65,8 +65,8 @@ jobs:
           echo "== assert settings.json landed =="
           test -f "$CLAUDE_CONFIG_DIR/settings.json"
 
-          echo "== assert CLAUDE.md carries the Project-local toolchains rule =="
-          grep -qF "Project-local toolchains" "$CLAUDE_CONFIG_DIR/CLAUDE.md"
+          echo "== assert CLAUDE.md carries the project-local toolchains rule =="
+          grep -qF "project_local_toolchains" "$CLAUDE_CONFIG_DIR/CLAUDE.md"
 
           echo "== assert skills landed =="
           test -d "$CLAUDE_CONFIG_DIR/skills/graphify"

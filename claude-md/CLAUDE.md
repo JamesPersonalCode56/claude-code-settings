@@ -65,32 +65,35 @@ Say "setup omc" or run `/oh-my-claudecode:omc-setup`.
 
 <!-- User customizations -->
 @RTK.md
-# graphify
-- **graphify** (`~/.claude/skills/graphify/SKILL.md`) - any input to knowledge graph. Trigger: `/graphify`
-When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` before doing anything else.
 
-# Quality gates (Rust / Python)
-When developing or changing application code, run the language's full static-check + test suite before claiming a change is done — skip only for trivial non-code edits (docs, config, comments) or when the user explicitly says so.
-- **Rust:** `cargo fmt --all` → `cargo clippy --all-targets -- -D warnings` → `cargo build` → `cargo test`. A project-specific build path in CLAUDE.md (e.g. `cargo xwin ...`) overrides plain `cargo build`.
-- **Python:** `ruff format` → `ruff check` (or the project's configured linter) → `mypy`/`pyright` if type hints are used → `pytest`.
-Prefer the exact commands a project's CLAUDE.md / CI defines; fall back to the above when none is specified. Run long builds/tests with `run_in_background`. If a gate fails, fix and re-run — do not report completion on a red gate.
+<graphify>
+`/graphify` or "graphify" → invoke Skill `graphify` FIRST, before anything else. Any input → knowledge graph. Def: `~/.claude/skills/graphify/SKILL.md`.
+</graphify>
 
-# Project-local toolchains & dependency isolation
-Keep every language's toolchain and dependencies **inside the project directory** — never inject them into the system/user global environment.
-- **Python (default):** create a project-local `.venv` and manage dependencies with **Poetry** (`poetry install` / `poetry add`; run via `poetry run` or the in-project `.venv/bin`). Do not `pip install` into system/user site-packages.
-- **All bin paths stay project-local:** install and invoke tool binaries from within the project (`.venv/bin`, `node_modules/.bin`, `./bin`, `vendor/`, etc.) instead of dropping them on the system `PATH` or a global prefix.
-- **Other languages follow the same principle when compiling/running:** use a project-scoped toolchain + dependency dir and the project's lockfile (e.g. Node `node_modules`, Rust `rust-toolchain.toml` + `target/`, Go module cache scoped to the project) rather than mutating system-wide state. Prefer local/pinned over global.
+<quality_gates>
+Changing app code → run full static-check + test suite before claiming done. Skip ONLY for trivial non-code edits (docs/config/comments) or explicit user opt-out. Gate red → fix + re-run; never report done on red. Long builds/tests → `run_in_background`. Project CLAUDE.md/CI commands override these defaults.
+- Rust: `cargo fmt --all` → `cargo clippy --all-targets -- -D warnings` → `cargo build` → `cargo test`. Project build path (e.g. `cargo xwin ...`) overrides plain build.
+- Python: `ruff format` → `ruff check` (or project linter) → `mypy`/`pyright` if typed → `pytest`.
+</quality_gates>
 
-# Surgical changes & no silent assumptions
-(Distilled from Karpathy's notes on LLM coding pitfalls — the parts not already covered above.)
-- **Surgical edits.** Touch only what the task requires. Don't "improve" adjacent code, comments, or formatting; don't refactor what isn't broken; match the existing style even if you'd do it differently. Every changed line must trace to the request.
-- **Clean up only your own mess.** Remove imports/vars/functions that YOUR change orphaned; leave pre-existing dead code alone (mention it, don't delete it) unless asked.
-- **No silent assumptions.** If the request is ambiguous, surface the interpretations and ask — don't pick one quietly. If a simpler approach exists, say so. When confused, name what's unclear and stop rather than guessing.
+<project_local_toolchains>
+Toolchain + deps stay INSIDE project dir; never mutate system/user global env. Local/pinned over global.
+- Python: project-local `.venv` + Poetry (`poetry install`/`add`; run via `poetry run` or `.venv/bin`). No `pip install` to system/user site-packages.
+- All tool binaries run from project (`.venv/bin`, `node_modules/.bin`, `./bin`, `vendor/`), never system PATH/global prefix.
+- Other langs: project-scoped toolchain + dep dir + lockfile (Node `node_modules`, Rust `rust-toolchain.toml`+`target/`, scoped Go cache).
+</project_local_toolchains>
 
-# Execution by delegation (master = router, subagents = doers)
-When executing a task above trivial scope, do NOT implement it directly. Re-prompt it into a self-contained brief and hand it to a separate subagent to execute via `/omc-teams` (oh-my-claudecode:omc-teams).
-- **Master agent does only:** read/inspect, plan and route work, write the task brief, and small edits *below issue level* — typos, one-liners, config tweaks, single-file trivial fixes.
-- **At or above issue level** (a discrete feature / bugfix / refactor, or anything multi-step or multi-file): the master must NOT do it itself — delegate to an independent subagent that owns the work end-to-end.
-- The brief must be self-contained (goal, context, constraints, verifiable success criteria) so the subagent can loop to done without re-querying the master. Spawn teammates in `acceptEdits` mode.
+<surgical_changes>
+- Surgical edits: touch only what the task needs. No improving adjacent code/comments/formatting, no refactoring what isn't broken; match existing style. Every changed line traces to the request.
+- Clean up only YOUR mess: remove imports/vars/funcs YOUR change orphaned; leave pre-existing dead code (mention, don't delete) unless asked.
+- No silent assumptions: ambiguous → surface interpretations + ask, don't pick quietly. Simpler path exists → say so. Confused → name what's unclear + stop, don't guess.
+</surgical_changes>
 
-> **Relation to OMC `delegation_rules`:** this rule is a stricter override of the OMC block above, not a contradiction. OMC says "delegate specialized work, work directly for trivial ops" — this pins the boundary at *issue level* and makes `/omc-teams` hand-off mandatory for anything at/above it. On any overlap, follow this rule.
+<delegation>
+Task above trivial scope → do NOT implement directly. Re-prompt into self-contained brief → hand to separate subagent via `/omc-teams`.
+- Master does ONLY: read/inspect, plan/route, write brief, edits BELOW issue level (typos, one-liners, config tweaks, single-file trivial fixes).
+- At/above issue level (discrete feature/bugfix/refactor, or multi-step/multi-file) → master must NOT do it; delegate to independent subagent owning it end-to-end.
+- Brief = self-contained (goal, context, constraints, verifiable success criteria) so subagent loops to done without re-querying. Spawn teammates in `acceptEdits`.
+- Agent↔agent comms ALWAYS English (subagent briefs + cross-session prompts via tmux/`/omc-teams`/`SendMessage`). Never Vietnamese (dấu or không dấu). Reply to human user in their language as normal.
+- Stricter override of OMC `<delegation_rules>`: boundary pinned at issue level; `/omc-teams` hand-off mandatory at/above. On overlap, this wins.
+</delegation>
