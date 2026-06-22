@@ -28,7 +28,7 @@ teardown() {
 @test "installed CLAUDE.md carries the Poetry/.venv project-local rule" {
   run bash "$REPO/setup.sh" --config-only
   [ "$status" -eq 0 ]
-  grep -qF "Project-local toolchains" "$CLAUDE_CONFIG_DIR/CLAUDE.md"
+  grep -qF "project_local_toolchains" "$CLAUDE_CONFIG_DIR/CLAUDE.md"
   grep -qF "Poetry" "$CLAUDE_CONFIG_DIR/CLAUDE.md"
   grep -qF ".venv" "$CLAUDE_CONFIG_DIR/CLAUDE.md"
 }
