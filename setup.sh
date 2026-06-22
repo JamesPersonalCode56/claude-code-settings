@@ -301,11 +301,36 @@ echo "[1/7] settings + OMC config"
 backup_then_copy "$REPO/settings/settings.json"  "$CC/settings.json"
 backup_then_copy "$REPO/settings/omc-config.json" "$CC/.omc-config.json"
 
-echo "[2/7] global instructions (CLAUDE.md / RTK.md)"
+echo "[2/7] global instructions (CLAUDE.md / RTK.md / fleet-name)"
 backup_then_copy "$REPO/claude-md/CLAUDE.md" "$CC/CLAUDE.md"
 backup_then_copy "$REPO/claude-md/RTK.md"    "$CC/RTK.md"
+# Provision the per-machine fleet-name (consumed by claude-switch.sh as the OTEL
+# machine= attribute) from the Tailscale MagicDNS short name. Skip silently if
+# tailscale/python3 are unavailable or yield nothing, so we never clobber an
+# existing fleet-name with an empty value; runtime resolution still falls back.
+if have tailscale && have python3; then
+  ts_name="$(tailscale status --json 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)['Self']['DNSName'].split('.')[0])" 2>/dev/null)"
+  if [[ -n "$ts_name" ]]; then
+    if [[ $DRY -eq 1 ]]; then
+      echo "  would: write $CC/fleet-name = $ts_name"
+    else
+      mkdir -p "$CC"; printf '%s' "$ts_name" >"$CC/fleet-name"; echo "  fleet-name = $ts_name"
+    fi
+  fi
+fi
 
 echo "[3/7] local skills"
+# Migrate legacy in-scan backups (skills/*.bak-*) out of the scanned skills/ dir so
+# Claude Code stops registering them as duplicate skills (from pre-skills-backups installs).
+for b in "$CC"/skills/*.bak-*; do
+  [[ -e "$b" ]] || continue
+  if [[ $DRY -eq 1 ]]; then
+    echo "  would: migrate legacy backup $(basename "$b") -> $CC/skills-backups/"
+  else
+    mkdir -p "$CC/skills-backups"
+    mv "$b" "$CC/skills-backups/" && echo "  migrated legacy backup $(basename "$b") -> skills-backups/"
+  fi
+done
 for s in "$REPO"/skills/*/; do
   name="$(basename "$s")"
   if [[ $DRY -eq 1 ]]; then

@@ -153,3 +153,32 @@ EOF
   run bash -c 'ls -d "$CLAUDE_CONFIG_DIR"/skills-backups/graphify.bak-* 2>/dev/null'
   [ -n "$output" ]
 }
+
+@test "setup migrates a pre-existing skills/<name>.bak-* out of the scanned skills/ dir" {
+  # Simulate a legacy in-scan backup left by an older setup.sh.
+  mkdir -p "$CLAUDE_CONFIG_DIR/skills/graphify.bak-19990101"
+  echo "stub" > "$CLAUDE_CONFIG_DIR/skills/graphify.bak-19990101/SKILL.md"
+  run bash "$REPO/setup.sh" --config-only
+  [ "$status" -eq 0 ]
+  # legacy backup is gone from the scanned skills/ dir (no dupe skill)
+  run bash -c 'ls -d "$CLAUDE_CONFIG_DIR"/skills/*.bak-* 2>/dev/null'
+  [ -z "$output" ]
+  # and was relocated under skills-backups/
+  run bash -c 'ls -d "$CLAUDE_CONFIG_DIR"/skills-backups/graphify.bak-19990101 2>/dev/null'
+  [ -n "$output" ]
+}
+
+@test "setup provisions ~/.claude/fleet-name from the Tailscale name" {
+  # Stub tailscale so the test is hermetic regardless of the host's real tailscale.
+  STUB="$BATS_TEST_TMPDIR/bin"
+  mkdir -p "$STUB"
+  cat >"$STUB/tailscale" <<'EOF'
+#!/usr/bin/env bash
+echo '{"Self":{"DNSName":"test-host.example.ts.net."}}'
+EOF
+  chmod +x "$STUB/tailscale"
+  run env PATH="$STUB:$PATH" bash "$REPO/setup.sh" --config-only
+  [ "$status" -eq 0 ]
+  [ -f "$CLAUDE_CONFIG_DIR/fleet-name" ]
+  [ "$(cat "$CLAUDE_CONFIG_DIR/fleet-name")" = "test-host" ]
+}
