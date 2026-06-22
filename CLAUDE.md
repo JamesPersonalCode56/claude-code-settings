@@ -42,7 +42,7 @@ Lessons from a real anchor-rename regression (smoke passed, bats failed on the S
 - Changing a referenced value (anchor, JSON key, filename, flag, env var) → `grep -rn` the WHOLE repo for EVERY dependent BEFORE claiming done. Enumerate call sites with grep, never from memory — memory stops at the first site you recall; grep lists all of them.
 - Verify with the ACTUAL check that guards it, not a sibling assumed equivalent. No local `bats`? `git clone --depth 1 https://github.com/bats-core/bats-core` and run `bats test/` — never infer the bats job is green from the smoke job alone.
 - A literal duplicated across N files is a regression trap: update all N or none. Prefer one source + reference; if duplication is unavoidable, list every site in the COUPLING note above.
-- Config sync drift: `settings/settings.json` (repo) can fall behind `~/.claude/settings.json` (live) when something edits the live file directly. Before `setup.sh --config-only` (which copies repo→live), diff the two `env`/top-level keys — re-install silently reverts live to repo, so reconcile repo forward first.
+- Config sync drift: `settings/settings.json` (repo) can fall behind `~/.claude/settings.json` (live) when something edits the live file directly. Before `setup.sh --config-only` (which copies repo→live), run `bin/settings-drift.sh` (exit 1 = drift, lists live-only keys repo would DROP) — re-install silently reverts live to repo, so reconcile repo forward first. CI can't see live, so this guard is local-only.
 </change_discipline>
 
 <guardrails>
