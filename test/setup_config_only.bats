@@ -139,3 +139,17 @@ EOF
   # Clean up the scaffolded secret so we don't leave it lying around.
   rm -f "$SWITCH_DIR/.env"
 }
+
+@test "re-install backs up skills OUTSIDE the scanned skills/ dir (no .bak dupes)" {
+  run bash "$REPO/setup.sh" --config-only
+  [ "$status" -eq 0 ]
+  # second run: graphify already installed, so it gets backed up
+  run bash "$REPO/setup.sh" --config-only
+  [ "$status" -eq 0 ]
+  # no .bak-* entry may appear directly under skills/ (would register as a dupe skill)
+  run bash -c 'ls -d "$CLAUDE_CONFIG_DIR"/skills/*.bak-* 2>/dev/null'
+  [ -z "$output" ]
+  # the backup must instead live under skills-backups/
+  run bash -c 'ls -d "$CLAUDE_CONFIG_DIR"/skills-backups/graphify.bak-* 2>/dev/null'
+  [ -n "$output" ]
+}

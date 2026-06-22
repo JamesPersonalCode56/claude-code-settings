@@ -309,11 +309,15 @@ echo "[3/7] local skills"
 for s in "$REPO"/skills/*/; do
   name="$(basename "$s")"
   if [[ $DRY -eq 1 ]]; then
-    [[ -e "$CC/skills/$name" ]] && echo "  would: back up skill $name -> $CC/skills/$name.bak-$TS"
+    [[ -e "$CC/skills/$name" ]] && echo "  would: back up skill $name -> $CC/skills-backups/$name.bak-$TS"
     echo "  would: install skill $name -> $CC/skills/$name"
     continue
   fi
-  [[ -e "$CC/skills/$name" ]] && { cp -a "$CC/skills/$name" "$CC/skills/$name.bak-$TS"; echo "  backed up skill $name"; }
+  if [[ -e "$CC/skills/$name" ]]; then
+    mkdir -p "$CC/skills-backups"
+    cp -a "$CC/skills/$name" "$CC/skills-backups/$name.bak-$TS"
+    echo "  backed up skill $name -> $CC/skills-backups/$name.bak-$TS"
+  fi
   rm -rf "$CC/skills/$name"; cp -a "$s" "$CC/skills/$name"; echo "  installed skill $name"
 done
 
