@@ -25,7 +25,7 @@ jobs:
         # best-effort install line, and a deliberately single-quoted
         # `export PATH=...` literal written verbatim into the profile), so we
         # set the severity floor to warning rather than mutate working code.
-        run: shellcheck --severity=warning setup.sh
+        run: shellcheck --severity=warning setup.sh setup.win.sh
 
       - name: shellcheck vendor/claude-switch (advisory)
         continue-on-error: true
