@@ -31,9 +31,9 @@ Helpers: `do_or_echo` (dry-run gate), `have`/`warn`/`ok`, `backup_then_copy src 
 
 <ci_gates>
 `.github/workflows/ci.yml` — 3 jobs. Repro locally before PR:
-- lint: `shellcheck --severity=warning setup.sh` (BLOCKING — keep clean) · `shfmt -d setup.sh vendor/claude-switch/claude-switch.sh` (advisory) · JSON validate `settings/*.json plugins/*.json` (BLOCKING).
+- lint: `shellcheck --severity=warning setup.sh setup.win.sh` (BLOCKING — keep clean) · `shfmt -d setup.sh vendor/claude-switch/claude-switch.sh` (advisory) · JSON validate `settings/*.json plugins/*.json` (BLOCKING).
 - smoke: `HOME=$(mktemp -d) CLAUDE_CONFIG_DIR=$HOME/.claude PROFILE=$HOME/.bashrc bash -c 'touch "$PROFILE"; bash setup.sh --config-only'` — asserts settings.json + skills landed, CLAUDE.md carries sentinel `project_local_toolchains`, runs twice for idempotency, `$PROFILE` markers appear EXACTLY once.
-- bats: `bats test/` (`setup_config_only.bats`, `switch_routing.bats`).
+- bats: `bats test/` (`setup_config_only.bats`, `switch_routing.bats`, `settings_drift.bats`, `setup_win.bats`). `setup_win.bats` smoke-tests the Windows installer: `bash -n setup.win.sh` + the `windows/build-settings.mjs` transform (Qwen creds baked into settings.json `env`, rtk hook / statusLine / OMC marketplace stripped); node-dependent cases `skip` when node is absent.
 COUPLING: the `project_local_toolchains` anchor lives in `claude-md/CLAUDE.md` and is grepped by TWO independent checks — `.github/workflows/ci.yml` (smoke job) AND `test/setup_config_only.bats:31`. Rename/remove it → update ALL THREE files in the same commit. (Real regression: smoke was updated but the bats grep was missed, so smoke passed green while the bats job failed on the same anchor.)
 </ci_gates>
 
