@@ -20,6 +20,7 @@ setup() {
 echo "STUB_CLAUDE_RAN"
 echo "BASE_URL=${ANTHROPIC_BASE_URL-<unset>}"
 echo "AUTH_TOKEN=${ANTHROPIC_AUTH_TOKEN-<unset>}"
+echo "MODEL=${ANTHROPIC_MODEL-<unset>}"
 echo "ARGS=$*"
 EOF
   chmod +x "$STUB_BIN/claude"
@@ -27,6 +28,7 @@ EOF
 
   # Point the switch at a test-owned env file (never the real vendored .env).
   export CLAUDE_QWEN_ENV="$TEST_TMP/.env"
+  export CLAUDE_QWEN_MODELS="$TEST_TMP/models.env"
 }
 
 teardown() {
@@ -103,4 +105,24 @@ EOF
   '
   [ "$status" -ne 0 ]
   [[ "$output" != *"STUB_CLAUDE_RAN"* ]]
+}
+
+@test "claude-qwen sources models.env before .env (model lineup is version-controlled)" {
+  [ -f "$SWITCH" ] || skip "switch missing"
+  # .env has the secret/connection but NO model; models.env supplies the model.
+  cat >"$CLAUDE_QWEN_ENV" <<'EOF'
+BASE_URL='https://token-plan.example/apps/anthropic'
+API_KEYS='sk-sp-REALTOKEN0000000000000000000000000000000000'
+EOF
+  cat >"$CLAUDE_QWEN_MODELS" <<'EOF'
+ANTHROPIC_MODEL='sentinel-model-from-models-env'
+EOF
+  run bash -c '
+    export DEFAULT_AUTH=qwen
+    . "'"$SWITCH"'"
+    claude hi </dev/null
+  '
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"STUB_CLAUDE_RAN"* ]]
+  [[ "$output" == *"MODEL=sentinel-model-from-models-env"* ]]
 }
