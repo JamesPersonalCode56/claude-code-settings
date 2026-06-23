@@ -92,7 +92,7 @@ Toolchain + deps stay INSIDE project dir; never mutate system/user global env. L
 <delegation>
 Task above trivial scope → do NOT implement directly. Re-prompt into self-contained brief → hand to separate subagent via `/omc-teams`.
 - Master does ONLY: read/inspect, plan/route, write brief, edits BELOW issue level (typos, one-liners, config tweaks, single-file trivial fixes).
-- At/above issue level (discrete feature/bugfix/refactor, or multi-step/multi-file) → master must NOT do it; delegate to independent subagent owning it end-to-end.
+- At/above issue level (discrete feature/bugfix/refactor, or multi-step/multi-file) → master must NOT do it; delegate to independent subagent owning it end-to-end. Once master has received + consumed the subagent's result, close it (`TaskStop`, or let it terminate) — no idle/lingering subagents left open.
 - Brief = self-contained (goal, context, constraints, verifiable success criteria) so subagent loops to done without re-querying. Spawn teammates in `acceptEdits`.
 - Agent↔agent comms ALWAYS English (subagent briefs + cross-session prompts via tmux/`/omc-teams`/`SendMessage`). Never Vietnamese (dấu or không dấu). Reply to human user in their language as normal.
 - Stricter override of OMC `<delegation_rules>`: boundary pinned at issue level; `/omc-teams` hand-off mandatory at/above. On overlap, this wins.
