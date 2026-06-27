@@ -1,3 +1,0 @@
-[submodule "vendor/claude-switch"]
-	path = vendor/claude-switch
-	url = https://github.com/JamesPersonalCode56/claude-switch.git

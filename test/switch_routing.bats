@@ -44,8 +44,8 @@ ANTHROPIC_MODEL='qwen3.7-max[1m]'
 EOF
 }
 
-@test "switch file is present (submodule initialized)" {
-  [ -f "$SWITCH" ] || skip "vendor/claude-switch/claude-switch.sh missing (submodule not initialized)"
+@test "switch file is present (vendored)" {
+  [ -f "$SWITCH" ] || skip "vendor/claude-switch/claude-switch.sh missing"
 }
 
 @test "non-interactive default routes to claude-max and STRIPS base/token" {

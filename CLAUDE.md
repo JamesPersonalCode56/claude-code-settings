@@ -25,7 +25,7 @@ Helpers: `do_or_echo` (dry-run gate), `have`/`warn`/`ok`, `backup_then_copy src 
 
 <dev_tasks>
 - Add/change a config file: drop under correct dir (`settings/` `claude-md/` `plugins/` `skills/` `env/`) → wire into `setup.sh` (`backup_then_copy` call or `skills/*/` loop), match the `[n/7]` step style → JSON must pass the validation loop → add a smoke `test -f`/`grep -qF` and/or `bats` assertion if it should be guarded.
-- Bump `vendor/claude-switch` submodule: commit INSIDE the submodule (or checkout new upstream SHA), then `git add vendor/claude-switch` (the gitlink) + commit in parent. Stage the gitlink ONLY, never the submodule's working files from the parent.
+- Edit `vendor/claude-switch/*` (dual-auth switch — now PLAIN vendored files, no longer a submodule): edit in place + `git add` the specific file(s) by explicit path. The real secret `.env` and runtime `.omc/` stay gitignored (root `.gitignore` + the dir's own `.gitignore`) — never stage them. The Qwen token is read at runtime via the shared `qwen-key-helper.sh` (used by BOTH the Linux switch `claude-qwen` and the Windows `settings.json` `apiKeyHelper`); change token-reading logic there, in one place.
 - Update `rtk`: regenerate `bin/rtk.sha256` from the new binary + commit it → `gh release upload v1.0.0 <rtk> --clobber` (asset MUST be named `rtk`) → if new tag, bump `RTK_TAG` default in `setup.sh`. Binary is NOT committed (stripped from history; release-asset only).
 </dev_tasks>
 

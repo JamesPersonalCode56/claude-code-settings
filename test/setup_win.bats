@@ -53,13 +53,17 @@ EOF
   [ "$status" -eq 0 ]
 }
 
-@test "build-settings: bakes Qwen base_url + token + lineup into env" {
+@test "build-settings: wires Qwen base_url + apiKeyHelper + lineup, NO secret token in settings" {
   command -v node >/dev/null || skip "node not available"
   _make_repo
   run node "$BUILD" "$TMP/repo" "$TMP/out.json" test-host agency
   [ "$status" -eq 0 ]
   grep -qF '"ANTHROPIC_BASE_URL": "https://fixture.example/anthropic"' "$TMP/out.json"
-  grep -qF '"ANTHROPIC_AUTH_TOKEN": "sk-sp-REALKEY123"' "$TMP/out.json"
+  # token is fetched at runtime via apiKeyHelper, never baked into settings.json
+  grep -qF '"apiKeyHelper": "bash ' "$TMP/out.json"
+  grep -qF 'qwen-key-helper.sh' "$TMP/out.json"
+  ! grep -q 'ANTHROPIC_AUTH_TOKEN' "$TMP/out.json"
+  ! grep -q 'sk-sp-REALKEY123' "$TMP/out.json"
   grep -qF '"ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-5.2[1m]"' "$TMP/out.json"
   grep -qF '"EXISTING": "1"' "$TMP/out.json"
 }

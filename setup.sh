@@ -184,16 +184,6 @@ if [[ $UNINSTALL -eq 1 ]]; then
   exit 0
 fi
 
-# Pull in submodules (vendor/claude-switch) so a non-recursive clone still works.
-# Best-effort: surface a real failure (don't swallow it) but keep going so the
-# rest of the config still lands.
-if [[ $DRY -eq 1 ]]; then
-  echo "  would: git submodule update --init --recursive (vendor/claude-switch)"
-elif ! git -C "$REPO" submodule update --init --recursive >/dev/null 2>&1; then
-  echo "  !! submodule init failed — run: git submodule update --init --recursive" >&2
-  echo "  !! the dual-auth switch will be missing until then; continuing with config." >&2
-fi
-
 do_or_echo "mkdir -p $CC $CC/skills $BIN" mkdir -p "$CC" "$CC/skills" "$BIN"
 
 # ----------------------------------------------------------------------------
@@ -372,7 +362,7 @@ echo "  rcp / browser-app MCP are prod-hosted and injected externally"
 echo "  (out of this repo's scope) — nothing to register here."
 
 echo "[7/7] dual-auth (Qwen / Anthropic-sub switch) — optional"
-# Dual-auth switch ships as the vendored submodule (pulled by `submodule update` above).
+# Dual-auth switch ships as plain files vendored in this repo (vendor/claude-switch/).
 SWITCH="$REPO/vendor/claude-switch/claude-switch.sh"
 # Scaffold the secret file if missing so the user knows to fill it.
 SWITCH_DIR="$(dirname "$SWITCH")"
@@ -401,7 +391,7 @@ if [[ -f "$SWITCH" ]]; then
     ok "appended dual-auth source to $PROFILE"
   fi
 else
-  warn "$SWITCH missing — run: git -C \"$REPO\" submodule update --init vendor/claude-switch"
+  warn "$SWITCH missing — vendor/claude-switch/claude-switch.sh not found in repo"
 fi
 
 echo ""

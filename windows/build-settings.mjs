@@ -49,9 +49,15 @@ if (secret.API_KEYS === 'sk-sp-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') {
 }
 
 settings.env = settings.env || {};
-// Qwen connection (maps exactly like claude-switch.sh claude-qwen).
+// Qwen connection. The token is NOT baked into settings.json — settings.json
+// `env` is for non-sensitive values (per Claude Code docs), so the secret stays
+// in the gitignored .env and is fetched at runtime by apiKeyHelper. Base URL +
+// model lineup are non-secret and remain in env.
 settings.env.ANTHROPIC_BASE_URL = secret.BASE_URL;
-settings.env.ANTHROPIC_AUTH_TOKEN = secret.API_KEYS;
+const helper = path.join(repoDir, 'vendor', 'claude-switch', 'qwen-key-helper.sh').replace(/\\/g, '/');
+// apiKeyHelper runs through the system shell (cmd on Windows); invoke the shared
+// .sh reader via bash (the fleet ships Git Bash). Same script the Linux switch uses.
+settings.apiKeyHelper = `bash "${helper}"`;
 // Model lineup (version-controlled, non-secret).
 for (const [k, v] of Object.entries(models)) settings.env[k] = v;
 // Per-host telemetry identity (machine = fleet name, auth = qwen).
@@ -67,4 +73,4 @@ delete settings.extraKnownMarketplaces;
 
 fs.mkdirSync(path.dirname(outFile), { recursive: true });
 fs.writeFileSync(outFile, JSON.stringify(settings, null, 2) + '\n');
-console.log(`wrote ${outFile} (machine=${machine}, model=${settings.model}, base_url set, token set)`);
+console.log(`wrote ${outFile} (machine=${machine}, model=${settings.model}, base_url set, apiKeyHelper set)`);
