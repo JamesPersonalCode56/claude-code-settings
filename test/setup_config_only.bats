@@ -117,27 +117,26 @@ EOF
   grep -qF "# user bottom line" "$PROFILE"
 }
 
-@test "dual-auth .env is scaffolded from .env.example and ends up mode 600" {
-  SWITCH_DIR="$REPO/vendor/claude-switch"
-  if [ ! -f "$SWITCH_DIR/.env.example" ]; then
-    skip "vendor/claude-switch/.env.example not present (submodule not initialized)"
-  fi
-  if [ -f "$SWITCH_DIR/.env" ]; then
-    skip "vendor/claude-switch/.env already exists on this checkout (real secret) — not overwriting"
-  fi
+@test "per-provider env files are scaffolded from .example and end up mode 600" {
+  ENV_DIR="$REPO/env"
+  for prov in qwen deepseek; do
+    [ -f "$ENV_DIR/models-$prov.env.example" ] || skip "env/models-$prov.env.example not present"
+    # Don't clobber a real secret already present on this checkout.
+    [ -f "$ENV_DIR/models-$prov.env" ] && skip "env/models-$prov.env already exists (real secret) — not overwriting"
+  done
 
   run bash "$REPO/setup.sh" --config-only
   [ "$status" -eq 0 ]
 
-  [ -f "$SWITCH_DIR/.env" ]
-  # Content matches the example it was scaffolded from.
-  cmp -s "$SWITCH_DIR/.env.example" "$SWITCH_DIR/.env"
-  # Mode is owner-only (600).
-  perms="$(stat -c '%a' "$SWITCH_DIR/.env")"
-  [ "$perms" = "600" ]
-
-  # Clean up the scaffolded secret so we don't leave it lying around.
-  rm -f "$SWITCH_DIR/.env"
+  for prov in qwen deepseek; do
+    [ -f "$ENV_DIR/models-$prov.env" ]
+    # Content matches the example it was scaffolded from.
+    cmp -s "$ENV_DIR/models-$prov.env.example" "$ENV_DIR/models-$prov.env"
+    # Mode is owner-only (600).
+    [ "$(stat -c '%a' "$ENV_DIR/models-$prov.env")" = "600" ]
+    # Clean up the scaffolded secret so we don't leave it lying around.
+    rm -f "$ENV_DIR/models-$prov.env"
+  done
 }
 
 @test "re-install backs up skills OUTSIDE the scanned skills/ dir (no .bak dupes)" {

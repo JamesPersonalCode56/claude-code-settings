@@ -4,6 +4,9 @@ vendor/*/.env
 # de-vendored claude-switch (now plain files): keep its real secret + runtime state out
 vendor/claude-switch/.env
 vendor/claude-switch/.omc/
+# per-provider claude-switch env files (base url + real token + lineup) — keep out of git; .example variants ARE tracked
+env/models-qwen.env
+env/models-deepseek.env
 .credentials.json
 *credentials*
 .claude.json

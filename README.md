@@ -40,8 +40,9 @@ the config plan.
      will not place an unverified binary). Override with `RTK_SRC=/path/to/rtk`
      (a local binary, still hash-checked) to skip the gh download.
 2. Copies all config (settings, CLAUDE.md/RTK.md, local skills, env vars).
-3. Sources the Qwen/Anthropic dual-auth switch vendored in `vendor/claude-switch/`
-   (scaffolding its `.env` from `.env.example` if missing).
+3. Sources the dual-auth switch (subscription / Qwen / DeepSeek) vendored in
+   `vendor/claude-switch/`, scaffolding `env/models-qwen.env` +
+   `env/models-deepseek.env` from their `.example` siblings if missing.
 
 It backs up any existing config file to `<name>.bak-<timestamp>` before
 overwriting, and is safe to re-run.
@@ -53,8 +54,9 @@ overwriting, and is safe to re-run.
 - Launch `claude` once so it auto-installs the enabled plugins.
 - The `rcp` / `browser-app` MCP servers are **prod-hosted and injected
   externally** (out of this repo's scope) — nothing to register here.
-- Fill `API_KEYS` in `vendor/claude-switch/.env` to use the Qwen endpoint
-  (scaffolded from `.env.example`; never committed).
+- Fill `API_KEYS` in `env/models-qwen.env` (Qwen endpoint) and/or
+  `env/models-deepseek.env` (DeepSeek native API) — each is scaffolded from its
+  `.example` sibling; never committed.
 
 ## Requirements
 
@@ -85,7 +87,8 @@ supply your own `rtk` via `RTK_SRC=/path/to/rtk` or remove the rtk hooks.
 | `claude-md/RTK.md` | Rust Token Killer usage notes. |
 | `plugins/known_marketplaces.json` | Plugin marketplaces: `claude-plugins-official` (anthropics) + `omc` (Yeachan-Heo/oh-my-claudecode). |
 | `plugins/installed_plugins.json` | Installed plugins + pinned versions: `oh-my-claudecode@omc` (4.13.6), `rust-analyzer-lsp@claude-plugins-official` (1.0.0). |
-| `vendor/claude-switch` | Dual-auth switch, vendored as plain files (`claude-max` / `claude-qwen` / bare-`claude` prompt) — **direct upstreams, no proxy** (verbatim accuracy). The Qwen token is read at runtime via the shared `qwen-key-helper.sh` (Linux switch + Windows `apiKeyHelper`), never stored in `settings.json`. |
+| `vendor/claude-switch` | Dual-auth switch, vendored as plain files (`claude-max` / `claude-qwen` / `claude-deepseek` / bare-`claude` 1/2/3 prompt) — **direct upstreams, no proxy** (verbatim accuracy). Per-provider connection + token + lineup live in `env/models-qwen.env` / `env/models-deepseek.env`; the token is read at runtime via the shared `qwen-key-helper.sh` (Linux switch + Windows `apiKeyHelper`), never stored in `settings.json`. |
+| `env/models-qwen.env` / `env/models-deepseek.env` | Per-provider env (base url + real token + model lineup, self-contained) for the dual-auth switch — gitignored; only the `.example` siblings are tracked. |
 | `skills/graphify` | Local skill: any input → knowledge graph. |
 | `skills/omc-reference` | Local skill: OMC agent/tool/skill reference. |
 | `env/auto-compact.env` | Auto-compact tuning env vars (window = 1,000,000; trigger = 40%). |
@@ -116,17 +119,19 @@ custom Qwen endpoint must set the window manually.
   - Not authenticated: `gh auth login`, then re-run `bash setup.sh`.
   - No `gh`: install it, or supply a local binary: `RTK_SRC=/path/to/rtk bash setup.sh`.
   - Wrong asset: check `gh release view v1.0.0 --repo JamesPersonalCode56/claude-code-settings`.
-- **`claude-qwen` exits immediately complaining about `.env`.** The switch
-  fails fast when `vendor/claude-switch/.env` is missing or still holds the
-  placeholder. Fix: fill `API_KEYS` (and `BASE_URL`) in
-  `vendor/claude-switch/.env` with your real Qwen token.
+- **`claude-qwen` / `claude-deepseek` exits immediately complaining about its env
+  file.** The switch fails fast when `env/models-qwen.env` (Qwen) or
+  `env/models-deepseek.env` (DeepSeek) is missing or still holds the placeholder.
+  Fix: fill `API_KEYS` (and `BASE_URL`) in the matching `env/models-*.env` with
+  your real provider token. (`claude` bare prompts 1/2/3 → sub / qwen / deepseek.)
 - **Windows fleet: Qwen worker 401s on a fresh box.** The generated
-  `settings.json` now uses `apiKeyHelper` (`bash "…/qwen-key-helper.sh"`) instead
-  of a baked token, so each worker needs **`bash` on the system PATH** (Git Bash's
-  `bash.exe`, since Claude Code runs `apiKeyHelper` via `cmd`) **and the
-  co-located `vendor/claude-switch/.env` present at runtime**. `settings.json` is
-  no longer self-contained: provisioning must ship `qwen-key-helper.sh` + `.env`,
-  not just `settings.json`. Missing either → empty token → 401.
+  `settings.json` uses `apiKeyHelper` (an absolute Git-Bash path +
+  `qwen-key-helper.sh`) instead of a baked token. `build-settings.mjs` resolves an
+  absolute `bash.exe` (Claude Code runs `apiKeyHelper` via `cmd`, where Git Bash is
+  usually not on PATH) and the helper reads `env/models-qwen.env` at runtime.
+  `settings.json` is no longer self-contained: provisioning must ship
+  `qwen-key-helper.sh` + `env/models-qwen.env`, not just `settings.json`. Missing
+  either → empty token → 401.
 - **Undo everything this bundle added.** Run `bash setup.sh --uninstall` to
   remove the auto-compact + dual-auth blocks from your `$PROFILE` (it backs the
   profile up first). Installed config files and copied binaries are left in

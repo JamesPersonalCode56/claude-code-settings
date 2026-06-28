@@ -1,7 +1,8 @@
 // Build a Windows-fleet ~/.claude/settings.json from the repo's settings.json,
-// folding the Qwen connection + model lineup into the `env` block so a headless
-// `claude` (and `claude -p`) talks to the Alibaba MaaS endpoint with no shell
-// switch. Cross-platform tweaks vs. the Linux daily-driver settings:
+// folding the Qwen connection + model lineup (read from env/models-qwen.env) into
+// the `env` block so a headless `claude` (and `claude -p`) talks to the Alibaba
+// MaaS endpoint with no shell switch. Cross-platform tweaks vs. the Linux
+// daily-driver settings:
 //   - DROP `hooks` (the rtk PreToolUse hook is a Linux-only ELF; would error on
 //     every Bash call under Git Bash).
 //   - DROP `statusLine` (depends on OMC plugin `hud/` files not shipped here).
@@ -35,15 +36,31 @@ function parseEnv(file) {
   return out;
 }
 
-const settings = JSON.parse(fs.readFileSync(path.join(repoDir, 'settings', 'settings.json'), 'utf8'));
-const models = parseEnv(path.join(repoDir, 'vendor', 'claude-switch', 'models.env'));
-const secret = parseEnv(path.join(repoDir, 'vendor', 'claude-switch', '.env'));
+// First existing Git-Bash bash.exe, normalized to forward slashes; else bare 'bash'.
+// Claude Code runs apiKeyHelper via cmd, where Git Bash is usually NOT on PATH, so
+// an absolute path is needed (the bare-`bash` form is a fallback only).
+function findBashExe() {
+  const candidates = [
+    'C:\\Program Files\\Git\\bin\\bash.exe',
+    'C:\\Program Files (x86)\\Git\\bin\\bash.exe',
+  ];
+  if (process.env.LOCALAPPDATA) {
+    candidates.push(`${process.env.LOCALAPPDATA}\\Programs\\Git\\bin\\bash.exe`);
+  }
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c.replace(/\\/g, '/');
+  }
+  return 'bash';
+}
 
-if (!secret.BASE_URL || !secret.API_KEYS) {
-  console.error('build-settings: vendor/claude-switch/.env missing BASE_URL/API_KEYS — cannot provision Qwen creds');
+const settings = JSON.parse(fs.readFileSync(path.join(repoDir, 'settings', 'settings.json'), 'utf8'));
+const qwen = parseEnv(path.join(repoDir, 'env', 'models-qwen.env'));
+
+if (!qwen.BASE_URL || !qwen.API_KEYS) {
+  console.error('build-settings: env/models-qwen.env missing BASE_URL/API_KEYS — cannot provision Qwen creds');
   process.exit(1);
 }
-if (secret.API_KEYS === 'sk-sp-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') {
+if (qwen.API_KEYS.includes('xxxxxxxx')) {
   console.error('build-settings: API_KEYS is still the placeholder — refusing to write');
   process.exit(1);
 }
@@ -51,15 +68,19 @@ if (secret.API_KEYS === 'sk-sp-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') {
 settings.env = settings.env || {};
 // Qwen connection. The token is NOT baked into settings.json — settings.json
 // `env` is for non-sensitive values (per Claude Code docs), so the secret stays
-// in the gitignored .env and is fetched at runtime by apiKeyHelper. Base URL +
-// model lineup are non-secret and remain in env.
-settings.env.ANTHROPIC_BASE_URL = secret.BASE_URL;
+// in the gitignored env/models-qwen.env and is fetched at runtime by apiKeyHelper.
+// Base URL + model lineup are non-secret and remain in env.
+settings.env.ANTHROPIC_BASE_URL = qwen.BASE_URL;
+const bashExe = findBashExe();
 const helper = path.join(repoDir, 'vendor', 'claude-switch', 'qwen-key-helper.sh').replace(/\\/g, '/');
 // apiKeyHelper runs through the system shell (cmd on Windows); invoke the shared
 // .sh reader via bash (the fleet ships Git Bash). Same script the Linux switch uses.
-settings.apiKeyHelper = `bash "${helper}"`;
-// Model lineup (version-controlled, non-secret).
-for (const [k, v] of Object.entries(models)) settings.env[k] = v;
+settings.apiKeyHelper = bashExe.includes(' ') ? `"${bashExe}" "${helper}"` : `${bashExe} "${helper}"`;
+// Model lineup (version-controlled, non-secret) — exclude the secret + base url.
+for (const [k, v] of Object.entries(qwen)) {
+  if (k === 'BASE_URL' || k === 'API_KEYS') continue;
+  settings.env[k] = v;
+}
 // Per-host telemetry identity (machine = fleet name, auth = qwen).
 const machine = fleetName || 'unknown';
 const uid = userId || 'agency';

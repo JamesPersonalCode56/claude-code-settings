@@ -39,21 +39,24 @@ bats test/
 4. If your file should land in the smoke test's assertions, add a `test -f` /
    `grep -qF` check in the smoke job and/or a `bats` test under `test/`.
 
-## Bump the `vendor/claude-switch` submodule
+## Edit the `vendor/claude-switch` dual-auth switch
 
-`vendor/claude-switch` is a git submodule pinned to a specific SHA in the parent.
+`vendor/claude-switch` is **plain vendored files** (no longer a git submodule).
+Edit the files in place and stage the specific file(s) **by explicit path**.
 
 ```bash
-cd vendor/claude-switch
-# make + commit your change INSIDE the submodule (or pull a new upstream SHA)
-git commit -am "…"            # or: git fetch && git checkout <sha>
-cd ../..
-git add vendor/claude-switch  # stages the new pinned SHA in the parent
-git commit -m "vendor/claude-switch: bump to <reason>"
+# edit vendor/claude-switch/claude-switch.sh (or qwen-key-helper.sh, README.md, …)
+git add vendor/claude-switch/claude-switch.sh   # explicit path only
+git commit -m "vendor/claude-switch: <reason>"
 ```
 
-The parent records only the submodule's commit pointer — stage `vendor/claude-switch`
-(the gitlink), never the submodule's working files from the parent.
+The switch has three routes — `claude-max` (subscription), `claude-qwen`, and
+`claude-deepseek` (bare `claude` prompts 1/2/3). Per-provider connection + token +
+lineup live in `env/models-qwen.env` / `env/models-deepseek.env` (real files
+gitignored; only the `.example` siblings are tracked). The token is read at
+runtime via the shared `qwen-key-helper.sh` — change token-reading logic there,
+in one place. **Never** stage the real `env/models-*.env`, the legacy
+`vendor/claude-switch/.env`, or the runtime `vendor/claude-switch/.omc/`.
 
 ## Update `rtk` (release asset + regenerate its checksum)
 
@@ -93,12 +96,14 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
 
 ## Never commit secrets via `git add -A`
 
-The working tree contains a **real secret** (`vendor/claude-switch/.env`) that
-must not be swept in accidentally.
+The working tree contains **real secrets** (`env/models-qwen.env`,
+`env/models-deepseek.env`, and the legacy `vendor/claude-switch/.env`) that must
+not be swept in accidentally.
 
 - **Never run `git add -A` / `git add .`.** Stage files explicitly **by path**.
-- `vendor/claude-switch/.env` holds a real API token — it is gitignored and
-  `chmod 600`; keep it out of every commit.
+- `env/models-qwen.env` / `env/models-deepseek.env` hold real API tokens — they
+  are gitignored and `chmod 600`; keep them out of every commit (only the
+  `.example` siblings are tracked).
 - **Never re-commit the `rtk` binary.** It was stripped from history and is
   distributed only as a release asset — commit just the regenerated
   `bin/rtk.sha256` (see above).

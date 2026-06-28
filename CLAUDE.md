@@ -13,7 +13,8 @@ Global behavioral rules (quality gates, project-local toolchains, surgical edits
 | `skills/*/` (graphify, omc-reference) | `~/.claude/skills/*/` | `[3/7]` loop |
 | `env/auto-compact.env` | appended to `$PROFILE` (`~/.bashrc`) | `[4/7]` |
 | `plugins/*.json` | documented desired state (Claude re-installs on launch) | `[5/7]` |
-| `vendor/claude-switch/` | sourced into `$PROFILE` (dual-auth switch) | `[7/7]` |
+| `vendor/claude-switch/` | sourced into `$PROFILE` (dual-auth switch: sub / qwen / deepseek) | `[7/7]` |
+| `env/models-qwen.env`, `env/models-deepseek.env` | per-provider env (base url + token + lineup); scaffolded from `.example` siblings (chmod 600) | `[7/7]` |
 `backup_then_copy` saves any existing target to `<name>.bak-<ts>` first; setup is idempotent + re-runnable.
 </distribution>
 
@@ -25,7 +26,7 @@ Helpers: `do_or_echo` (dry-run gate), `have`/`warn`/`ok`, `backup_then_copy src 
 
 <dev_tasks>
 - Add/change a config file: drop under correct dir (`settings/` `claude-md/` `plugins/` `skills/` `env/`) → wire into `setup.sh` (`backup_then_copy` call or `skills/*/` loop), match the `[n/7]` step style → JSON must pass the validation loop → add a smoke `test -f`/`grep -qF` and/or `bats` assertion if it should be guarded.
-- Edit `vendor/claude-switch/*` (dual-auth switch — now PLAIN vendored files, no longer a submodule): edit in place + `git add` the specific file(s) by explicit path. The real secret `.env` and runtime `.omc/` stay gitignored (root `.gitignore` + the dir's own `.gitignore`) — never stage them. The Qwen token is read at runtime via the shared `qwen-key-helper.sh` (used by BOTH the Linux switch `claude-qwen` and the Windows `settings.json` `apiKeyHelper`); change token-reading logic there, in one place.
+- Edit `vendor/claude-switch/*` (dual-auth switch — now PLAIN vendored files, no longer a submodule): edit in place + `git add` the specific file(s) by explicit path. There are three routes: `claude-max` (sub), `claude-qwen`, `claude-deepseek` (bare `claude` prompts 1/2/3). Per-provider connection + token + lineup live in `env/models-qwen.env` / `env/models-deepseek.env` (real files gitignored — only the `.example` siblings are tracked); the legacy `vendor/claude-switch/.env` real secret + runtime `.omc/` also stay gitignored — never stage any of them. The provider token is read at runtime via the shared `qwen-key-helper.sh` (used by BOTH the Linux switch `claude-qwen`/`claude-deepseek` and the Windows `settings.json` `apiKeyHelper`, reading `env/models-qwen.env`); change token-reading logic there, in one place.
 - Update `rtk`: regenerate `bin/rtk.sha256` from the new binary + commit it → `gh release upload v1.0.0 <rtk> --clobber` (asset MUST be named `rtk`) → if new tag, bump `RTK_TAG` default in `setup.sh`. Binary is NOT committed (stripped from history; release-asset only).
 </dev_tasks>
 
@@ -46,7 +47,7 @@ Lessons from a real anchor-rename regression (smoke passed, bats failed on the S
 </change_discipline>
 
 <guardrails>
-- NEVER `git add -A` / `git add .`. Stage by explicit path. Working tree holds a REAL secret `vendor/claude-switch/.env` (gitignored, chmod 600) — keep it out of every commit.
+- NEVER `git add -A` / `git add .`. Stage by explicit path. Working tree holds REAL secrets `env/models-qwen.env` + `env/models-deepseek.env` (gitignored, chmod 600; only their `.example` siblings are tracked) — keep them out of every commit.
 - NEVER re-commit the `rtk` binary — only `bin/rtk.sha256`.
 - Commits: short scoped subject (`setup.sh: …`, `vendor/claude-switch: …`, `ci: …`, `docs: …`). End AI-assisted commits with trailer `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`.
 - Repo default branch is `main` — branch before opening a PR.

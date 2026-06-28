@@ -364,17 +364,20 @@ echo "  (out of this repo's scope) — nothing to register here."
 echo "[7/7] dual-auth (Qwen / Anthropic-sub switch) — optional"
 # Dual-auth switch ships as plain files vendored in this repo (vendor/claude-switch/).
 SWITCH="$REPO/vendor/claude-switch/claude-switch.sh"
-# Scaffold the secret file if missing so the user knows to fill it.
-SWITCH_DIR="$(dirname "$SWITCH")"
-if [[ ! -f "$SWITCH_DIR/.env" && -f "$SWITCH_DIR/.env.example" ]]; then
-  if [[ $DRY -eq 1 ]]; then
-    echo "  would: scaffold $SWITCH_DIR/.env from .env.example (chmod 600)"
-  else
-    cp "$SWITCH_DIR/.env.example" "$SWITCH_DIR/.env"
-    chmod 600 "$SWITCH_DIR/.env"  # holds a real API token — keep it owner-only
-    warn "fill API_KEYS in vendor/claude-switch/.env (scaffolded from .env.example)"
+# Scaffold the per-provider secret files if missing so the user knows to fill them.
+for prov in qwen deepseek; do
+  ex="$REPO/env/models-$prov.env.example"
+  tgt="$REPO/env/models-$prov.env"
+  if [[ ! -f "$tgt" && -f "$ex" ]]; then
+    if [[ $DRY -eq 1 ]]; then
+      echo "  would: scaffold $tgt from $(basename "$ex") (chmod 600)"
+    else
+      cp "$ex" "$tgt"
+      chmod 600 "$tgt"  # holds a real API token — keep it owner-only
+      warn "fill API_KEYS in env/models-$prov.env (scaffolded from $(basename "$ex"))"
+    fi
   fi
-fi
+done
 if [[ -f "$SWITCH" ]]; then
   if grep -qF "$DA_BEGIN" "$PROFILE" 2>/dev/null; then
     echo "  already sourced in $PROFILE"

@@ -21,14 +21,15 @@ echo "STUB_CLAUDE_RAN"
 echo "BASE_URL=${ANTHROPIC_BASE_URL-<unset>}"
 echo "AUTH_TOKEN=${ANTHROPIC_AUTH_TOKEN-<unset>}"
 echo "MODEL=${ANTHROPIC_MODEL-<unset>}"
+echo "EFFORT=${CLAUDE_CODE_EFFORT_LEVEL-<unset>}"
 echo "ARGS=$*"
 EOF
   chmod +x "$STUB_BIN/claude"
   export PATH="$STUB_BIN:$PATH"
 
-  # Point the switch at a test-owned env file (never the real vendored .env).
-  export CLAUDE_QWEN_ENV="$TEST_TMP/.env"
-  export CLAUDE_QWEN_MODELS="$TEST_TMP/models.env"
+  # Point the switch at test-owned env files (never the real per-provider files).
+  export CLAUDE_QWEN_ENV="$TEST_TMP/models-qwen.env"
+  export CLAUDE_DEEPSEEK_ENV="$TEST_TMP/models-deepseek.env"
 }
 
 teardown() {
@@ -107,15 +108,13 @@ EOF
   [[ "$output" != *"STUB_CLAUDE_RAN"* ]]
 }
 
-@test "claude-qwen sources models.env before .env (model lineup is version-controlled)" {
+@test "claude-qwen reads the lineup from its consolidated env file" {
   [ -f "$SWITCH" ] || skip "switch missing"
-  # .env has the secret/connection but NO model; models.env supplies the model.
+  # The consolidated env file carries connection + secret + model lineup together.
   cat >"$CLAUDE_QWEN_ENV" <<'EOF'
 BASE_URL='https://token-plan.example/apps/anthropic'
 API_KEYS='sk-sp-REALTOKEN0000000000000000000000000000000000'
-EOF
-  cat >"$CLAUDE_QWEN_MODELS" <<'EOF'
-ANTHROPIC_MODEL='sentinel-model-from-models-env'
+ANTHROPIC_MODEL='sentinel-model-from-env'
 EOF
   run bash -c '
     export DEFAULT_AUTH=qwen
@@ -124,5 +123,38 @@ EOF
   '
   [ "$status" -eq 0 ]
   [[ "$output" == *"STUB_CLAUDE_RAN"* ]]
-  [[ "$output" == *"MODEL=sentinel-model-from-models-env"* ]]
+  [[ "$output" == *"MODEL=sentinel-model-from-env"* ]]
+}
+
+@test "DEFAULT_AUTH=deepseek with a filled env routes to claude-deepseek with base+effort set" {
+  [ -f "$SWITCH" ] || skip "switch missing"
+  cat >"$CLAUDE_DEEPSEEK_ENV" <<'EOF'
+BASE_URL='https://api.deepseek.com/anthropic'
+API_KEYS='sk-REALDEEPSEEK00000000000000000000'
+ANTHROPIC_MODEL='deepseek-v4-pro[1m]'
+CLAUDE_CODE_EFFORT_LEVEL='max'
+EOF
+  run bash -c '
+    export DEFAULT_AUTH=deepseek
+    . "'"$SWITCH"'"
+    claude hi </dev/null
+  '
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"STUB_CLAUDE_RAN"* ]]
+  [[ "$output" == *"BASE_URL=https://api.deepseek.com/anthropic"* ]]
+  [[ "$output" == *"AUTH_TOKEN=sk-REALDEEPSEEK00000000000000000000"* ]]
+  [[ "$output" == *"EFFORT=max"* ]]
+}
+
+@test "guard: missing deepseek env => claude-deepseek fails non-zero and stub does NOT run" {
+  [ -f "$SWITCH" ] || skip "switch missing"
+  rm -f "$CLAUDE_DEEPSEEK_ENV"
+  run bash -c '
+    export DEFAULT_AUTH=deepseek
+    . "'"$SWITCH"'"
+    claude hi </dev/null
+  '
+  [ "$status" -ne 0 ]
+  [[ "$output" != *"STUB_CLAUDE_RAN"* ]]
+  [[ "$output" == *"missing"* ]]
 }

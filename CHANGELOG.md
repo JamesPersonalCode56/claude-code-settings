@@ -7,8 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **DeepSeek native API route** — the dual-auth switch gains `claude-deepseek`
+  alongside `claude-max` / `claude-qwen`; the bare `claude` prompt is now 1/2/3
+  (subscription / Qwen / DeepSeek).
+
 ### Changed
 
+- **Per-provider env consolidated** into `env/models-qwen.env` +
+  `env/models-deepseek.env` — each is self-contained (base url + token + model
+  lineup). Replaces the old split `vendor/claude-switch/{.env,models.env}`. Real
+  files are gitignored; only the `.example` siblings are tracked.
+- **Windows `apiKeyHelper` uses an absolute Git-Bash path** — `build-settings.mjs`
+  now resolves an absolute `bash.exe` (Claude Code runs `apiKeyHelper` via `cmd`,
+  where Git Bash is usually not on PATH) and reads `env/models-qwen.env`.
 - **`rtk` no longer committed** — the ~9.6 MB binary was stripped from **all** git
   history and is now distributed as the `rtk` asset on the private GitHub Release
   `v1.0.0`. `setup.sh` fetches it via `gh release download` (requires `gh` +

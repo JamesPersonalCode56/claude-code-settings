@@ -1,14 +1,21 @@
-# Claude Code — Dual auth: Subscription vs Qwen API
+# Claude Code — Dual auth: Subscription vs Qwen API vs DeepSeek API
 
-Chạy song song hai phiên Claude Code độc lập:
-- **Command A** → gói **Max subscription** (OAuth, claude.ai login)
-- **Command B** → **Qwen endpoint** (Alibaba Cloud Model Studio token-plan, tính theo token)
+Chạy song song các phiên Claude Code độc lập:
+- **Command A** (`claude-max`) → gói **Max subscription** (OAuth, claude.ai login)
+- **Command B** (`claude-qwen`) → **Qwen endpoint** (Alibaba Cloud Model Studio token-plan, tính theo token)
+- **Command C** (`claude-deepseek`) → **DeepSeek native API**
 
-Hai process tách biệt hoàn toàn — mỗi cái có env riêng, không đụng auth của nhau.
+Các process tách biệt hoàn toàn — mỗi cái có env riêng, không đụng auth của nhau.
 
 ---
 
-## File `.env`
+## File env (per-provider)
+
+Connection + token + model lineup nằm chung trong một file self-contained mỗi provider, ở repo `env/`:
+- `env/models-qwen.env` (cho `claude-qwen`)
+- `env/models-deepseek.env` (cho `claude-deepseek`)
+
+Real file gitignored — chỉ commit bản `.example`. Ví dụ `env/models-qwen.env`:
 
 ```ini
 BASE_URL='https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic'
@@ -56,6 +63,7 @@ claude-qwen() {
 ```bash
 claude-max      # Terminal 1 → gói Max subscription
 claude-qwen     # Terminal 2 → Qwen endpoint, tính token riêng
+claude-deepseek # Terminal 3 → DeepSeek native API
 ```
 
 Kiểm tra đang dùng auth nào: gõ `/status` trong Claude Code.

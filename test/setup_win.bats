@@ -21,11 +21,12 @@ teardown() {
 }
 
 # Build a throwaway "repo" the mjs can read: a settings.json carrying every block
-# that must be stripped, plus models.env + a (good by default) secret .env.
+# that must be stripped, plus a consolidated env/models-qwen.env (base url + model
+# lineup, and the API_KEYS secret line by default) that build-settings reads.
 _make_repo() {
   local key="${1:-sk-sp-REALKEY123}"
   local with_keys_line="${2:-yes}"
-  mkdir -p "$TMP/repo/settings" "$TMP/repo/vendor/claude-switch"
+  mkdir -p "$TMP/repo/settings" "$TMP/repo/vendor/claude-switch" "$TMP/repo/env"
   cat >"$TMP/repo/settings/settings.json" <<'EOF'
 {
   "env": { "EXISTING": "1" },
@@ -37,15 +38,12 @@ _make_repo() {
   "extraKnownMarketplaces": { "omc": { "source": { "source": "git", "url": "https://example/omc.git" } } }
 }
 EOF
-  cat >"$TMP/repo/vendor/claude-switch/models.env" <<'EOF'
-# non-secret lineup
-ANTHROPIC_MODEL='deepseek-v4-pro[1m]'
-ANTHROPIC_DEFAULT_OPUS_MODEL='glm-5.2[1m]'
-EOF
   {
     echo "BASE_URL='https://fixture.example/anthropic'"
+    echo "ANTHROPIC_MODEL='deepseek-v4-pro[1m]'"
+    echo "ANTHROPIC_DEFAULT_OPUS_MODEL='glm-5.2[1m]'"
     if [ "$with_keys_line" = yes ]; then echo "API_KEYS='$key'"; fi
-  } >"$TMP/repo/vendor/claude-switch/.env"
+  } >"$TMP/repo/env/models-qwen.env"
 }
 
 @test "setup.win.sh: passes bash -n syntax check" {
@@ -60,7 +58,7 @@ EOF
   [ "$status" -eq 0 ]
   grep -qF '"ANTHROPIC_BASE_URL": "https://fixture.example/anthropic"' "$TMP/out.json"
   # token is fetched at runtime via apiKeyHelper, never baked into settings.json
-  grep -qF '"apiKeyHelper": "bash ' "$TMP/out.json"
+  grep -qF '"apiKeyHelper"' "$TMP/out.json"
   grep -qF 'qwen-key-helper.sh' "$TMP/out.json"
   ! grep -q 'ANTHROPIC_AUTH_TOKEN' "$TMP/out.json"
   ! grep -q 'sk-sp-REALKEY123' "$TMP/out.json"
