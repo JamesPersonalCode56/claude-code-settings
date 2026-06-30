@@ -184,7 +184,7 @@ if [[ $UNINSTALL -eq 1 ]]; then
   exit 0
 fi
 
-do_or_echo "mkdir -p $CC $CC/skills $BIN" mkdir -p "$CC" "$CC/skills" "$BIN"
+do_or_echo "mkdir -p $CC $CC/skills $CC/hooks $BIN" mkdir -p "$CC" "$CC/skills" "$CC/hooks" "$BIN"
 
 # ----------------------------------------------------------------------------
 if [[ $BOOTSTRAP -eq 1 ]]; then
@@ -287,9 +287,17 @@ fi
 fi  # end BOOTSTRAP
 
 # ----------------------------------------------------------------------------
-echo "[1/7] settings + OMC config"
+echo "[1/7] settings + OMC config + hooks"
 backup_then_copy "$REPO/settings/settings.json"  "$CC/settings.json"
 backup_then_copy "$REPO/settings/omc-config.json" "$CC/.omc-config.json"
+# Hook scripts referenced by settings.json (e.g. the SubagentStop pane-reaper that
+# closes orphaned teammate tmux panes). Install each, then make it executable.
+for h in "$REPO"/hooks/*.sh; do
+  [[ -e "$h" ]] || continue
+  name="$(basename "$h")"
+  backup_then_copy "$h" "$CC/hooks/$name"
+  do_or_echo "chmod +x $CC/hooks/$name" chmod +x "$CC/hooks/$name"
+done
 
 echo "[2/7] global instructions (CLAUDE.md / RTK.md / fleet-name)"
 backup_then_copy "$REPO/claude-md/CLAUDE.md" "$CC/CLAUDE.md"

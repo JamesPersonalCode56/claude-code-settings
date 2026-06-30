@@ -25,11 +25,17 @@ jobs:
         # best-effort install line, and a deliberately single-quoted
         # `export PATH=...` literal written verbatim into the profile), so we
         # set the severity floor to warning rather than mutate working code.
-        run: shellcheck --severity=warning setup.sh setup.win.sh
+        run: shellcheck --severity=warning setup.sh setup.win.sh hooks/reap-teammate-panes.sh
 
       - name: shellcheck vendor/claude-switch (advisory)
         continue-on-error: true
         run: shellcheck vendor/claude-switch/claude-switch.sh
+
+      - name: shfmt diff hooks (BLOCKING)
+        # The pane-reaper hook is authored shfmt-clean (honors .editorconfig:
+        # 2-space). setup.sh stays advisory below because its pre-existing style
+        # predates shfmt and reformatting it would be unrelated churn.
+        run: shfmt -d hooks/reap-teammate-panes.sh
 
       - name: shfmt diff (advisory)
         continue-on-error: true
@@ -71,6 +77,12 @@ jobs:
           echo "== assert skills landed =="
           test -d "$CLAUDE_CONFIG_DIR/skills/graphify"
           test -d "$CLAUDE_CONFIG_DIR/skills/omc-reference"
+
+          echo "== assert pane-reaper hook landed and is executable =="
+          test -x "$CLAUDE_CONFIG_DIR/hooks/reap-teammate-panes.sh"
+
+          echo "== assert settings.json registers a SubagentStop hook =="
+          python3 -c "import json,sys; s=json.load(open(sys.argv[1])); sys.exit(0 if s.get('hooks',{}).get('SubagentStop') else 1)" "$CLAUDE_CONFIG_DIR/settings.json"
 
           echo "== second run for idempotency =="
           bash setup.sh --config-only
