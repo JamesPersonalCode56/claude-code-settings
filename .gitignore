@@ -33,3 +33,7 @@ file-history/
 shell-snapshots/
 paste-cache/
 .last-*
+
+# Claude Code plugin/marketplace manifests (minh-internal)
+!.claude-plugin/
+!.claude-plugin/**

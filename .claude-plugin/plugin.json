@@ -1,0 +1,8 @@
+{
+  "name": "ccs",
+  "version": "1.0.0",
+  "description": "Minh's Claude Code settings distribution — graphify + omc-reference skills and the SubagentStop pane-reaper hook, versioned from the claude-code-settings repo.",
+  "author": {
+    "name": "Minh"
+  }
+}
