@@ -10,7 +10,7 @@ Global behavioral rules (quality gates, project-local toolchains, surgical edits
 | `claude-md/CLAUDE.md` | `~/.claude/CLAUDE.md` (global user instructions) | `[2/7]` `backup_then_copy` :305 |
 | `claude-md/RTK.md` | `~/.claude/RTK.md` | `[2/7]` :306 |
 | `settings/settings.json`, `settings/omc-config.json` | `~/.claude/…` | `[1/7]` |
-| `hooks/*.sh` | `~/.claude/hooks/*.sh` (SubagentStop pane-reaper) | `[1/7]` loop :295 |
+| `hooks/*.sh` | `~/.claude/hooks/*.sh` (pane-reaper; hook REGISTERED by the ccs plugin's `hooks/hooks.json`, not settings.json) | `[1/7]` loop :295 |
 | `skills/*/` (graphify, omc-reference) | `~/.claude/skills/*/` | `[3/7]` loop |
 | `env/auto-compact.env` | appended to `$PROFILE` (`~/.bashrc`) | `[4/7]` |
 | `plugins/*.json` | documented desired state (Claude re-installs on launch) | `[5/7]` |

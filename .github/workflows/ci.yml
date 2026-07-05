@@ -81,8 +81,9 @@ jobs:
           echo "== assert pane-reaper hook landed and is executable =="
           test -x "$CLAUDE_CONFIG_DIR/hooks/reap-teammate-panes.sh"
 
-          echo "== assert settings.json registers a SubagentStop hook =="
-          python3 -c "import json,sys; s=json.load(open(sys.argv[1])); sys.exit(0 if s.get('hooks',{}).get('SubagentStop') else 1)" "$CLAUDE_CONFIG_DIR/settings.json"
+          echo "== assert the pane-reaper is plugin-registered (hooks/hooks.json), NOT settings-wired =="
+          python3 -c "import json,sys; s=json.load(open(sys.argv[1])); sys.exit(1 if s.get('hooks',{}).get('SubagentStop') else 0)" "$CLAUDE_CONFIG_DIR/settings.json"
+          python3 -c "import json,sys; h=json.load(open('hooks/hooks.json')); sys.exit(0 if h.get('hooks',{}).get('SubagentStop') else 1)"
 
           echo "== second run for idempotency =="
           bash setup.sh --config-only

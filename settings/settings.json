@@ -25,16 +25,6 @@
           }
         ]
       }
-    ],
-    "SubagentStop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hooks/reap-teammate-panes.sh\""
-          }
-        ]
-      }
     ]
   },
   "statusLine": {
