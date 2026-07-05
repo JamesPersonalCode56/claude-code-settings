@@ -10,6 +10,7 @@ Global behavioral rules (quality gates, project-local toolchains, surgical edits
 | `claude-md/CLAUDE.md` | `~/.claude/CLAUDE.md` (global user instructions) | `[2/7]` `backup_then_copy` :305 |
 | `claude-md/RTK.md` | `~/.claude/RTK.md` | `[2/7]` :306 |
 | `settings/settings.json`, `settings/omc-config.json` | `~/.claude/…` | `[1/7]` |
+| `hooks/*.sh` | `~/.claude/hooks/*.sh` (SubagentStop pane-reaper) | `[1/7]` loop :295 |
 | `skills/*/` (graphify, omc-reference) | `~/.claude/skills/*/` | `[3/7]` loop |
 | `env/auto-compact.env` | appended to `$PROFILE` (`~/.bashrc`) | `[4/7]` |
 | `plugins/*.json` | documented desired state (Claude re-installs on launch) | `[5/7]` |
@@ -49,6 +50,6 @@ Lessons from a real anchor-rename regression (smoke passed, bats failed on the S
 <guardrails>
 - NEVER `git add -A` / `git add .`. Stage by explicit path. Working tree holds REAL secrets `env/models-qwen.env` + `env/models-deepseek.env` (gitignored, chmod 600; only their `.example` siblings are tracked) — keep them out of every commit.
 - NEVER re-commit the `rtk` binary — only `bin/rtk.sha256`.
-- Commits: short scoped subject (`setup.sh: …`, `vendor/claude-switch: …`, `ci: …`, `docs: …`). End AI-assisted commits with trailer `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`.
+- Commits: short scoped subject (`setup.sh: …`, `vendor/claude-switch: …`, `ci: …`, `docs: …`). End AI-assisted commits with trailer `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`.
 - Repo default branch is `main` — branch before opening a PR.
 </guardrails>

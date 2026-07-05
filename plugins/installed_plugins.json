@@ -4,13 +4,19 @@
     "oh-my-claudecode@omc": [
       {
         "scope": "user",
-        "version": "4.13.6"
+        "version": "4.14.7"
       }
     ],
     "rust-analyzer-lsp@claude-plugins-official": [
       {
         "scope": "user",
         "version": "1.0.0"
+      }
+    ],
+    "frontend-design@claude-plugins-official": [
+      {
+        "scope": "user",
+        "version": "unknown"
       }
     ]
   }

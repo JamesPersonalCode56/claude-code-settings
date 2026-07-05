@@ -83,10 +83,11 @@ supply your own `rtk` via `RTK_SRC=/path/to/rtk` or remove the rtk hooks.
 |---|---|
 | `settings/settings.json` | Main Claude Code settings — permissions, hooks (rtk), status line (omc-hud), enabled plugins, marketplaces, `effortLevel`, theme, teammate mode, etc. |
 | `settings/omc-config.json` | oh-my-claudecode config (default execution mode `ultrawork`, team ops). |
-| `claude-md/CLAUDE.md` | Global instructions (oh-my-claudecode + graphify). |
+| `claude-md/CLAUDE.md` | Global instructions (oh-my-claudecode + tool inventory + graphify). |
 | `claude-md/RTK.md` | Rust Token Killer usage notes. |
+| `hooks/*.sh` | Hook scripts installed to `~/.claude/hooks/` (SubagentStop pane-reaper). |
 | `plugins/known_marketplaces.json` | Plugin marketplaces: `claude-plugins-official` (anthropics) + `omc` (Yeachan-Heo/oh-my-claudecode). |
-| `plugins/installed_plugins.json` | Installed plugins + pinned versions: `oh-my-claudecode@omc` (4.13.6), `rust-analyzer-lsp@claude-plugins-official` (1.0.0). |
+| `plugins/installed_plugins.json` | Installed plugins + pinned versions: `oh-my-claudecode@omc` (4.14.7), `rust-analyzer-lsp@claude-plugins-official` (1.0.0), `frontend-design@claude-plugins-official`. |
 | `vendor/claude-switch` | Dual-auth switch, vendored as plain files (`claude-max` / `claude-qwen` / `claude-deepseek` / bare-`claude` 1/2/3 prompt) — **direct upstreams, no proxy** (verbatim accuracy). Per-provider connection + token + lineup live in `env/models-qwen.env` / `env/models-deepseek.env`; the token is read at runtime via the shared `qwen-key-helper.sh` (Linux switch + Windows `apiKeyHelper`), never stored in `settings.json`. |
 | `env/models-qwen.env` / `env/models-deepseek.env` | Per-provider env (base url + real token + model lineup, self-contained) for the dual-auth switch — gitignored; only the `.example` siblings are tracked. |
 | `skills/graphify` | Local skill: any input → knowledge graph. |

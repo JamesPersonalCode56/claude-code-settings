@@ -66,6 +66,17 @@ Say "setup omc" or run `/oh-my-claudecode:omc-setup`.
 <!-- User customizations -->
 @RTK.md
 
+<tool_inventory>
+Standing toolset on THIS machine. Before hand-rolling a shell pipeline, browsing blind, grepping for symbols, doing mental math, or answering from memory — spend one beat matching the job against this list; if a capability seems missing, ToolSearch the deferred-tool list before concluding it doesn't exist.
+- MCP `rcp` — Windows-fleet PC automation exposed as tools (open-app, ui-tree/ui-find/ui-click/ui-type, screenshot, type-text, agent-task, fanout, advisor, …). ANY action against a fleet Windows host goes through these (or `skills/skill run` in nmt-rcp) — never a hand-written ssh line with guessed flags.
+- MCP `fleet` — control-plane `fleet_*` tools (status, list_machines, releases, publish, assign_task, exec_ps, …). Use for fleet state/rollout questions instead of guessing host state.
+- MCP `browser-app` — real browser control; use for interactive/JS-heavy pages instead of curl-scraping or answering blind.
+- LSP — `rust-analyzer-lsp` plugin + OMC `lsp_*` tools: goto-def/references/rename/diagnostics for symbol work in LSP-served repos; never grep alone for symbol renames/impact.
+- OMC tools — `ast_grep_*` (structural code search/rewrite), `python_repl` (real computation — no eyeball arithmetic on data), `wiki_*` / `project_memory_*` / notepad (persistent knowledge), `session_search` (past sessions).
+- `rtk` — token-optimized CLI proxy, auto-applied by the PreToolUse Bash hook; don't bypass it or re-implement its filtering.
+- Skills auto-trigger on keywords (graphify, omc skills, /loop, /schedule, …) — when a request matches a skill, invoke the Skill tool FIRST, before any free-form work.
+</tool_inventory>
+
 <graphify>
 `/graphify` or "graphify" → invoke Skill `graphify` FIRST, before anything else. Any input → knowledge graph. Def: `~/.claude/skills/graphify/SKILL.md`.
 </graphify>
