@@ -1,0 +1,6 @@
+[Unit]
+Description=Refresh minh-internal Claude Code plugins from their canonical repos
+
+[Service]
+Type=oneshot
+ExecStart=/mnt/2TB/minh-archive/claude-code-settings/bin/plugin-autoupdate.sh

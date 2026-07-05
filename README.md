@@ -101,6 +101,28 @@ supply your own `rtk` via `RTK_SRC=/path/to/rtk` or remove the rtk hooks.
 Code re-installs the plugins from their marketplaces on next launch. The
 `plugins/*.json` files document the exact desired state / pinned versions.
 
+## Internal plugins (`minh-internal`)
+
+This repo doubles as a Claude Code **plugin** and hosts the internal **marketplace**:
+
+- `.claude-plugin/marketplace.json` — marketplace `minh-internal`, registered
+  from the local checkout as a `directory` source (manifest edits apply without
+  a push). Plugins:
+  - `ccs` — this repo via its **git URL** (tracked files only; a path source
+    would copy the gitignored env secrets into the plugin cache — never do
+    that): ships `skills/` + the SubagentStop pane-reaper (`hooks/hooks.json`).
+  - `rcp-engine` — `git-subdir` of `nmt-rcp` `plugin/` @ `main`, versioned with
+    the rcp release tags.
+- **Auto-update:** `bin/plugin-autoupdate.sh` (systemd user timer
+  `ccs-plugin-cd`, every 10 min; units in `systemd/`, installed to
+  `~/.config/systemd/user`) fetches both repos and, on a new nmt-rcp `v*` tag
+  or a new `origin/main` commit, runs `claude plugin marketplace update
+  minh-internal` + `claude plugin update <plugin>`. Manual refresh:
+  `bin/plugin-autoupdate.sh --force` (or `/plugin` in a session). Updates apply
+  to new sessions.
+- **Version rule:** bump `.claude-plugin/plugin.json` `version` when shipping a
+  plugin-visible change (`skills/`, `hooks/`) — content refresh keys off it.
+
 ## Auto-compact env vars
 
 `env/auto-compact.env` must be sourced as **real shell env vars** (not the

@@ -10,5 +10,11 @@
       "source": "git",
       "url": "https://github.com/Yeachan-Heo/oh-my-claudecode.git"
     }
+  },
+  "minh-internal": {
+    "source": {
+      "source": "directory",
+      "path": "/mnt/2TB/minh-archive/claude-code-settings"
+    }
   }
 }

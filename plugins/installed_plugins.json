@@ -4,7 +4,7 @@
     "oh-my-claudecode@omc": [
       {
         "scope": "user",
-        "version": "4.14.7"
+        "version": "4.15.2"
       }
     ],
     "rust-analyzer-lsp@claude-plugins-official": [
@@ -17,6 +17,18 @@
       {
         "scope": "user",
         "version": "unknown"
+      }
+    ],
+    "ccs@minh-internal": [
+      {
+        "scope": "user",
+        "version": "1.0.0"
+      }
+    ],
+    "rcp-engine@minh-internal": [
+      {
+        "scope": "user",
+        "version": "0.5.1"
       }
     ]
   }
