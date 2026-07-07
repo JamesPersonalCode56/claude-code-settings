@@ -68,9 +68,42 @@ Say "setup omc" or run `/oh-my-claudecode:omc-setup`.
 
 <tool_inventory>
 Standing toolset on THIS machine. Before hand-rolling a shell pipeline, browsing blind, grepping for symbols, doing mental math, or answering from memory — spend one beat matching the job against this list; if a capability seems missing, ToolSearch the deferred-tool list before concluding it doesn't exist.
-- MCP `rcp` — Windows-fleet PC automation exposed as tools (open-app, ui-tree/ui-find/ui-click/ui-type, screenshot, type-text, agent-task, fanout, advisor, …). ANY action against a fleet Windows host goes through these (or `skills/skill run` in nmt-rcp) — never a hand-written ssh line with guessed flags.
-- MCP `fleet` — control-plane `fleet_*` tools (status, list_machines, releases, publish, assign_task, exec_ps, …). Use for fleet state/rollout questions instead of guessing host state.
-- MCP `browser-app` — real browser control; use for interactive/JS-heavy pages instead of curl-scraping or answering blind.
+- MCP `rcp` — Windows-fleet PC automation. ANY action against a fleet Windows host goes through these (or `skills/skill run` in nmt-rcp) — never a hand-written ssh line with guessed flags. Tools:
+  - `open-app` — launch a Windows app by name or absolute path.
+  - `ui-tree` — dump the UI Automation tree of a window as JSON.
+  - `ui-find` — find UIA elements by name/automation_id/control_type/class_name.
+  - `ui-click` — click a UIA element (raw SendInput, falls back to UIA Invoke).
+  - `ui-type` — focus a UIA element and type text via SendInput.
+  - `type-text` — type a string into whatever's currently focused.
+  - `screenshot` — capture the primary screen as PNG (stdout or file).
+  - `browser` — unified Edge CDP control: `launch|eval|fetch` (SendInput-free, works in disconnected RDP).
+  - `audio-volume` — read/set system master volume or mute.
+  - `enable-rdp` — enable RDP on a host (registry + Tailscale-only firewall rule + optional password).
+  - `install-spawn-service` — push + register `rcp-spawn-service.exe` as a LocalSystem service.
+  - `build-rcp` — compile the rcp Rust binary on one or more hosts via cargo.
+  - `sync-skills` — roll the latest skill vault bundle out to fleet hosts.
+  - `fanout` — run another skill across many hosts in parallel, output prefixed by host.
+  - `agent-task` — queue a prompt to a host's Session-1 agent poller and return its answer.
+  - `ask-agent` — run a peer AI agent (gemini/qwen/claude) locally on the Ubuntu orchestrator.
+  - `advisor` — master-side recipe knowledge layer: store verified recipes, compose/run/submit tasks, record ground-truth feedback.
+  - `coursera` — manage/deploy/pull the Coursera autopilot fleet (status, progress, posture, start/stop/restart, logs, deploy, pull).
+  - `write-formatted-word-doc` — verified composite recipe that produces a formatted Word doc end-to-end.
+- MCP `fleet` — control-plane for the nmt-ads-agency Windows fleet. Use for fleet state/rollout questions instead of guessing host state. Tools:
+  - `fleet_status` — one-shot health view: enrolled machines + recent tasks with terminal counts.
+  - `fleet_list_machines` — list machine ids enrolled in the control-plane.
+  - `fleet_assign_task` — assign a task/prompt to machines or profiles (selectors: `*`, `<machine>`, `<machine>.<profile>`, `<profile>`); returns a task id.
+  - `fleet_task_status` — read back per-machine status/result of a previously assigned task.
+  - `fleet_drop_task` — cancel/drop a queued task so it stops replaying.
+  - `fleet_employee_history` — durable task history for a profile (nhân viên) by roster name.
+  - `fleet_exec_ps` — run a PowerShell snippet on one Windows box over SSH.
+  - `fleet_assign_ring` — assign a machine to a rollout ring (pilot/soak/broad/hold).
+  - `fleet_set_ring` — point a ring at a target release version.
+  - `fleet_release_target` — show which release version a given machine resolves to.
+  - `fleet_releases` — list signed installers in the release registry.
+  - `fleet_build` — build the CloakAgent installer from the current tree (no sign/publish).
+  - `fleet_publish` — build + sign + publish a release to the registry (IRREVERSIBLE, guarded by a confirm=version check).
+  - `fleet_publish_bundle` — publish a golden browser-profile bundle as the next version for a profile.
+  - `fleet_bundle_status` — show the current published bundle version + sha256 for a profile.
 - LSP — `rust-analyzer-lsp` plugin + OMC `lsp_*` tools: goto-def/references/rename/diagnostics for symbol work in LSP-served repos; never grep alone for symbol renames/impact.
 - OMC tools — `ast_grep_*` (structural code search/rewrite), `python_repl` (real computation — no eyeball arithmetic on data), `wiki_*` / `project_memory_*` / notepad (persistent knowledge), `session_search` (past sessions).
 - `rtk` — token-optimized CLI proxy, auto-applied by the PreToolUse Bash hook; don't bypass it or re-implement its filtering.
@@ -101,7 +134,7 @@ Toolchain + deps stay INSIDE project dir; never mutate system/user global env. L
 </surgical_changes>
 
 <delegation>
-Task above trivial scope → do NOT implement directly. Re-prompt into self-contained brief → hand to separate subagent via `/omc-teams`.
+Task above trivial scope → do NOT implement directly. Re-prompt into self-contained brief → hand to separate subagent via `/omc-teams` with Sonnet model.
 - Master does ONLY: read/inspect, plan/route, write brief, edits BELOW issue level (typos, one-liners, config tweaks, single-file trivial fixes).
 - At/above issue level (discrete feature/bugfix/refactor, or multi-step/multi-file) → master must NOT do it; delegate to independent subagent owning it end-to-end. Once master has received + consumed the subagent's result, close it (`TaskStop`, or let it terminate) — no idle/lingering subagents left open.
 - Brief = self-contained (goal, context, constraints, verifiable success criteria) so subagent loops to done without re-querying. Spawn teammates in `acceptEdits`.
