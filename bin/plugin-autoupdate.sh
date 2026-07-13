@@ -3,7 +3,7 @@
 #
 # Watches the canonical sources and refreshes the installed plugins when they
 # advance:
-#   - nmt-rcp: new `v*` release tag or new origin/main commit  -> rcp-engine
+#   - nmt-tool-remote-control-pc: new `v*` release tag or new origin/main commit -> rcp-engine
 #   - claude-code-settings: new origin/main commit             -> ccs
 #
 # Fired by the `ccs-plugin-cd` systemd user timer (see systemd/); run manually
@@ -17,7 +17,7 @@
 set -euo pipefail
 
 CCS=/mnt/2TB/minh-archive/claude-code-settings
-RCP=/mnt/2TB/minh-archive/nmt-rcp
+RCP=/mnt/2TB/minh-archive/nmt-tool-remote-control-pc
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/minh-plugin-cd"
 STATE="$STATE_DIR/last-applied"
 LOG="$STATE_DIR/plugin-cd.log"
@@ -25,7 +25,7 @@ mkdir -p "$STATE_DIR"
 
 log() { printf '%s %s\n' "$(date -u +%FT%TZ)" "$*" | tee -a "$LOG" >&2; }
 
-git -C "$RCP" fetch --quiet --tags origin 2>/dev/null || log "WARN: nmt-rcp fetch failed (offline?)"
+git -C "$RCP" fetch --quiet --tags origin 2>/dev/null || log "WARN: nmt-tool-remote-control-pc fetch failed (offline?)"
 git -C "$CCS" fetch --quiet origin 2>/dev/null || log "WARN: claude-code-settings fetch failed (offline?)"
 
 rcp_tag=$(git -C "$RCP" tag --list 'v*' --sort=-v:refname | head -1)

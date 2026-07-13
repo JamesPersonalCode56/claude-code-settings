@@ -111,11 +111,11 @@ This repo doubles as a Claude Code **plugin** and hosts the internal **marketpla
   - `ccs` — this repo via its **git URL** (tracked files only; a path source
     would copy the gitignored env secrets into the plugin cache — never do
     that): ships `skills/` + the SubagentStop pane-reaper (`hooks/hooks.json`).
-  - `rcp-engine` — `git-subdir` of `nmt-rcp` `plugin/` @ `main`, versioned with
+  - `rcp-engine` — `git-subdir` of `nmt-tool-remote-control-pc` `plugin/` @ `main`, versioned with
     the rcp release tags.
 - **Auto-update:** `bin/plugin-autoupdate.sh` (systemd user timer
   `ccs-plugin-cd`, every 10 min; units in `systemd/`, installed to
-  `~/.config/systemd/user`) fetches both repos and, on a new nmt-rcp `v*` tag
+  `~/.config/systemd/user`) fetches both repos and, on a new nmt-tool-remote-control-pc `v*` tag
   or a new `origin/main` commit, runs `claude plugin marketplace update
   minh-internal` + `claude plugin update <plugin>`. Manual refresh:
   `bin/plugin-autoupdate.sh --force` (or `/plugin` in a session). Updates apply

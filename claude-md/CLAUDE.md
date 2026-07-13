@@ -68,7 +68,7 @@ Say "setup omc" or run `/oh-my-claudecode:omc-setup`.
 
 <tool_inventory>
 Standing toolset on THIS machine. Before hand-rolling a shell pipeline, browsing blind, grepping for symbols, doing mental math, or answering from memory — spend one beat matching the job against this list; if a capability seems missing, ToolSearch the deferred-tool list before concluding it doesn't exist.
-- MCP `rcp` — Windows-fleet PC automation. ANY action against a fleet Windows host goes through these (or `skills/skill run` in nmt-rcp) — never a hand-written ssh line with guessed flags. Tools:
+- MCP `rcp` — Windows-fleet PC automation. ANY action against a fleet Windows host goes through these (or `skills/skill run` in nmt-tool-remote-control-pc) — never a hand-written ssh line with guessed flags. Tools:
   - `open-app` — launch a Windows app by name or absolute path.
   - `ui-tree` — dump the UI Automation tree of a window as JSON.
   - `ui-find` — find UIA elements by name/automation_id/control_type/class_name.

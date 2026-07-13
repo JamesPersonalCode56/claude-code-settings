@@ -19,7 +19,7 @@
       "name": "rcp-engine",
       "source": {
         "source": "git-subdir",
-        "url": "git@github.com:JamesPersonalCode56/nmt-rcp.git",
+        "url": "git@github.com:JamesPersonalCode56/nmt-tool-remote-control-pc.git",
         "path": "plugin",
         "ref": "main"
       },
